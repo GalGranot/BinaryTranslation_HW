@@ -1,4 +1,6 @@
-
+/* ===================================================================== */
+/* includes, namespaces, global vars */
+/* ===================================================================== */
 #include "pin.H"
 #include <iostream>
 #include <list>
@@ -8,56 +10,11 @@ using std::cerr;
 using std::string;
 using std::list;
 
-
-UINT64 ins_count = 0;
-
-class routine
-{
-public:
-    RTN rtn;
-    UINT32 rtnCallCount;
-    UINT32 instructionsNum;
-
-    //construct routine from instruction
-    routine(RTN* rtn) : rtn(rtn), rtnCallCount(0), instructionsNum(0) {};
-
-    void printRtn()
-    {
-        ADDRINT address = RTN_Address(this->rtn);
-        IMG img = IMG_FindByAddress(address);
-        cout << IMG_name(img) << ", ";
-        //FIXME: check if cout can print addrint type
-        cout << "0x" << IMG_StartAddress(img) << ", ";
-        cout << RTN_Name(this->rtn) << ",";
-        cout << "0x" << address << ", ";
-        cout << RTN_NumIns(this->rtn);
-        cout << rtnCallCount << endl;
-    }
-};
-
-routine* findRtn(list<routine>* routines, routine* target)
-{
-    list<routine>::iterator it = routines->begin();
-    while (it != routines->end())
-    {
-        if (RTN_Address(target->rtn) == RTN_Address(it->rtn))
-            return it;
-        else it++;
-    }
-    return NULL;
-
-}
-
-
 /* ===================================================================== */
-/* Commandline Switches */
+/* stuff from old file, figure out if it's relevant */
 /* ===================================================================== */
 
-
-/* ===================================================================== */
-/* Print Help Message                                                    */
-/* ===================================================================== */
-
+/*
 INT32 Usage()
 {
     cerr <<
@@ -69,15 +26,82 @@ INT32 Usage()
     cerr << endl;
 
     return -1;
-}
 
-/* ===================================================================== */
 
 VOID docount()
 {
     ins_count++;
 
 }
+
+int main(int argc, char* argv[])
+{
+    if (PIN_Init(argc, argv))
+    {
+        return Usage();
+    }
+
+
+    INS_AddInstrumentFunction(Instruction, 0);
+    PIN_AddFiniFunction(Fini, 0);
+
+    // Never returns
+    PIN_StartProgram();
+
+    return 0;
+}
+*/
+
+/* ===================================================================== */
+/* classes */
+/* ===================================================================== */
+
+class routine
+{
+public:
+    RTN rtn;
+    ADDRINT address;
+    UINT32 rtnCallCount;
+    UINT32 instructionsNum;
+
+    //construct routine from instruction
+    routine(RTN* rtn) : rtn(rtn), rtnCallCount(0), instructionsNum(0),
+        address(RTN_Address(rtn)) {};
+
+    void printRtn()
+    {
+        IMG img = IMG_FindByAddress(address);
+        cout << IMG_name(img) << ", ";
+        //FIXME: check if cout can print addrint type
+        cout << "0x" << IMG_StartAddress(img) << ", ";
+        cout << RTN_Name(this->rtn) << ",";
+        cout << "0x" << address << ", ";
+        cout << RTN_NumIns(this->rtn);
+        cout << rtnCallCount << endl;
+    }
+};
+
+/* ===================================================================== */
+/* routine functions */
+/* ===================================================================== */
+
+routine* findRtn(list<routine>* routines, routine* target)
+{
+    ADDRINT targetAddress = target->address;
+    list<routine>::iterator it = routines->begin();
+    while (!it)
+    {
+        ADDRINT currentAddress = it->address;
+        if (currentAddress == targetAddress) //targert routine exists in list
+            return it;
+        else it++
+    }
+    return NULL;
+}
+
+/* ===================================================================== */
+/* pintool instructions */
+/* ===================================================================== */
 
 VOID instructionProcess(INS ins, list<routine> routines)
 {
@@ -139,27 +163,8 @@ VOID Fini(INT32 code, VOID* v)
 }
 
 /* ===================================================================== */
-/* Main                                                                  */
+/* ain                                                                  */
 /* ===================================================================== */
-
-int main(int argc, char* argv[])
-{
-    if (PIN_Init(argc, argv))
-    {
-        return Usage();
-    }
-
-
-    INS_AddInstrumentFunction(Instruction, 0);
-    PIN_AddFiniFunction(Fini, 0);
-
-    // Never returns
-    PIN_StartProgram();
-
-    return 0;
-}
-
-//new code
 
 int main(int argc, char* argv[])
 {
@@ -169,7 +174,6 @@ int main(int argc, char* argv[])
     PIN_AddFiniFunction(Fini, 0);
 
     return 0;
-
 }
 
 /* ===================================================================== */
