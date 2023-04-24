@@ -3,10 +3,13 @@
 /* ===================================================================== */
 #include "pin.H"
 #include <iostream>
+#include <fstream>
 #include <list>
+#include <algorithm>
 
 using std::cout;
 using std::cerr;
+using std::endl;
 using std::string;
 using std::list;
 
@@ -73,9 +76,9 @@ public:
         IMG img = IMG_FindByAddress(address);
         cout << IMG_name(img) << ", ";
         //FIXME: check if cout can print addrint type
-        cout << "0x" << IMG_StartAddress(img) << ", ";
+        cout << "0x" << IMG_StartAddress(img) << ",";
         cout << RTN_Name(this->rtn) << ",";
-        cout << "0x" << address << ", ";
+        cout << "0x" << address << ",";
         cout << RTN_NumIns(this->rtn);
         cout << rtnCallCount << endl;
     }
@@ -97,6 +100,25 @@ routine* findRtn(list<routine>* routines, routine* target)
         else it++
     }
     return NULL;
+}
+
+//prints routines to file and destroys list
+void printToFile(list<routine> routines)
+{
+    std::ofstream outfile("rtn-output.csv");
+    if (!outfile.open())
+    {
+        cout << "error opening file";
+        return;
+    }
+    std::list<routine>::iterator it = routines.begin();
+    while (!it)
+    {
+        outfile << it->printRtn() << endl;
+        delete tmp;
+        it = routines.erase(it);
+    }
+    routines.clear();
 }
 
 /* ===================================================================== */
@@ -159,11 +181,10 @@ VOID RoutineFunc(RTN rtn, VOID* routines)
 VOID Fini(INT32 code, VOID* v)
 {
     cerr << "Count " << ins_count << endl;
-
 }
 
 /* ===================================================================== */
-/* ain                                                                  */
+/* main                                                                  */
 /* ===================================================================== */
 
 int main(int argc, char* argv[])
@@ -173,6 +194,7 @@ int main(int argc, char* argv[])
     RTN_AddInstrumentFunction(RoutineFunc, (VOID*)&routines);
     PIN_AddFiniFunction(Fini, 0);
 
+    printToFile(routines);
     return 0;
 }
 
