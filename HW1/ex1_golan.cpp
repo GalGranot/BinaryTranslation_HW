@@ -1,167 +1,194 @@
-#include "pin.H"
+/*
+ * Copyright (C) 2004-2021 Intel Corporation.
+ * SPDX-License-Identifier: MIT
+ */
+
+//
+// This tool counts the number of times a routine is executed and
+// the number of instructions executed in a routine
+//
+
+#include <fstream>
+#include <iomanip>
 #include <iostream>
-#include <list>
-
-using std::cout;
+#include <string.h>
+#include <vector>
+#include "pin.H"
 using std::cerr;
+using std::dec;
 using std::endl;
+using std::hex;
+using std::ofstream;
+using std::setw;
 using std::string;
-using std::list;
+using std::vector;
 
+ofstream outFile;
 
-
-class MyRoutine
+// Holds instruction count for a single procedure
+typedef struct RtnCount
 {
+    string _name;
+    string _image;
+    ADDRINT _address;
+    ADDRINT _img_address;
+    RTN _rtn;
+    UINT64 _rtnCount;
+    UINT64 _icount;
+    struct RtnCount* _next;
+} RTN_COUNT;
 
-public:
-	
-	//ADDRINT		img_address; 
-	RTN			rtn;
-	ADDRINT		rtn_address;
-	//string		img_name;
-	UINT32		inst_count;
-	UINT32		rtn_call_count;
+bool CompareRTN_COUNT_PTR(RTN_COUNT * rp1, RTN_COUNT * rp2)
+{
+    return rp1->_icount > rp2->_icount;
+}
 
-	MyRoutine()
-	{};
-
-	MyRoutine(INS ins) : rtn(INS_Rtn(ins)), rtn_address(RTN_Address(this->rtn)), rtn_call_count(0) {};
-	MyRoutine(RTN rtn) : rtn(rtn), rtn_address(RTN_Address(this->rtn)), rtn_call_count(0) {};
-
-	void print_rtn_info()
+void print_rtn_info(RTN_COUNT* rc)
 	{
-		IMG		image		= IMG_FindByAddress(this->rtn_address);
-		ADDRINT	img_address = IMG_StartAddress(image);
-		string	img_name	= IMG_Name(image);
-		string	rtn_name	= RTN_Name(this->rtn);
-		UINT32	inst_count	= RTN_NumIns(this->rtn);
+		// IMG		image		= IMG_FindByAddress(this->rtn_address);
+		// ADDRINT	img_address = IMG_StartAddress(rc->_image);
+		// string	img_name	= IMG_Name(image);
+		// string	rtn_name	= RTN_Name(this->rtn);
+		// UINT32	inst_count	= RTN_NumIns(this->rtn);
 
-		cout << img_name << ", ";
-		cout << "0x" << img_address << ", ";
-		cout << rtn_name << ", ";
-		cout << "0x" << this->rtn_address << ", ";
-		cout << inst_count << ", ";
-		cout << this->rtn_call_count;
-		cout << endl;
+		//outFile << rc->_image << ", ";
+        outFile << rc->_image << ", ";
+		outFile << "0x" << hex << rc->_img_address << ", ";
+		outFile << rc->_name << ", ";
+		outFile << "0x" << hex << rc->_address << ", ";
+		outFile << dec << rc->_icount << ", ";
+		outFile << dec << rc->_rtnCount;
+		outFile << endl;
 
 		return;
 	};
 
-};
 
+// Linked list of instruction counts for each routine 
+RTN_COUNT* RtnList = 0;
+vector<RTN_COUNT*> RtnVec;
 
-MyRoutine* find_routine_in_list(list<MyRoutine*>* rtns, MyRoutine* rtn) //RTN* rtn)
+// This function is called before every instruction is executed
+VOID docount(UINT64* counter) { (*counter)++; }
+
+const char* StripPath(const char* path)
 {
-	list<MyRoutine*>::iterator it = rtns->begin();
-	ADDRINT	rtn_address = rtn->rtn_address; // RTN_Address(rtn->rtn);
-
-	for (; it != rtns->end(); it++)
-	{
-		if ((*it)->rtn_address == rtn_address)
-		{
-			return *it;
-		}
-	}
-
-	return nullptr;
+    const char* file = strrchr(path, '/');
+    if (file)
+        return file + 1;
+    else
+        return path;
 }
 
+// Pin calls this function every time a new rtn is executed
+VOID Routine(RTN rtn, VOID* v)
+{
+    // Allocate a counter for this routine
+    RTN_COUNT* rc = new RTN_COUNT;
+
+    // The RTN goes away when the image is unloaded, so save it now
+    // because we need it in the fini
+    rc->_name     = RTN_Name(rtn);
+    //rc->_image    = StripPath(IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str());
+    rc->_image    = IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str();
+    rc->_address  = RTN_Address(rtn);
+    IMG		image		= IMG_FindByAddress(rc->_address);
+    rc->_img_address = IMG_StartAddress(image);
+    rc->_icount   = 0;
+    rc->_rtnCount = 0;
+
+    // Add to list of routines
+    rc->_next = RtnList;
+    RtnList   = rc;
+
+    RtnVec.push_back(rc);
+
+    RTN_Open(rtn);
+
+    // Insert a call at the entry point of a routine to increment the call count
+    RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(rc->_rtnCount), IARG_END);
+
+    // For each instruction of the routine
+    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
+    {
+        // Insert a call to docount to increment the instruction counter for this rtn
+        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(rc->_icount), IARG_END);
+    }
+
+    RTN_Close(rtn);
+}
+
+// This function is called when the application exits
+// It prints the name and count for each procedure
+VOID Fini(INT32 code, VOID* v)
+{
+    outFile << setw(23) << "Procedure"
+            << " " << setw(15) << "Image"
+            << " " << setw(18) << "Image Address"
+            << " " << setw(18) << "RTN Address"
+            << " " << setw(12) << "Calls"
+            << " " << setw(12) << "Instructions" << endl;
+
+
+    std::sort(RtnVec.begin(), RtnVec.end(), CompareRTN_COUNT_PTR);
+
+    for(RTN_COUNT * rc : RtnVec)
+    {
+        
+        if (rc->_icount > 0)
+        {
+            print_rtn_info(rc);
+        }
+        //     outFile << setw(23) << rc->_name << " " << setw(15) << rc->_image << " " << setw(18) << hex << rc->_address << dec
+        //             << " " << setw(12) << rc->_rtnCount << " " << setw(12) << rc->_icount << endl;
+    }
+
+    // for (RTN_COUNT* rc = RtnList; rc; rc = rc->_next)
+    // {
+        
+    //     if (rc->_icount > 0)
+    //     {
+    //         print_rtn_info(rc);
+    //     }
+    //     //     outFile << setw(23) << rc->_name << " " << setw(15) << rc->_image << " " << setw(18) << hex << rc->_address << dec
+    //     //             << " " << setw(12) << rc->_rtnCount << " " << setw(12) << rc->_icount << endl;
+    // }
+}
+
+/* ===================================================================== */
+/* Print Help Message                                                    */
+/* ===================================================================== */
 
 INT32 Usage()
 {
-    cerr << "This tool prints out the number of dynamically executed " << endl
-         << "instructions, basic blocks and threads in the application." << endl
-         << endl;
-
+    cerr << "This Pintool counts the number of times a routine is executed" << endl;
+    cerr << "and the number of instructions executed in a routine" << endl;
+    cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
     return -1;
 }
 
-
-VOID docount_inst(VOID* v, MyRoutine* rtn) // INS ins)
-{
-	//MyRoutine* rtn = new MyRoutine(ins);
-	list<MyRoutine*>* rtns = (list<MyRoutine*>*) v;
-	MyRoutine* tmp = find_routine_in_list(rtns, rtn);
-
-	if (tmp)
-	{
-		tmp->inst_count++;
-		delete rtn;
-	}
-	else
-	{
-		rtn->inst_count++;
-		((list<MyRoutine*>*)rtns)->push_back(rtn);
-	}
-
-	return;
-}
-
-
-VOID docount_rtn(VOID* v, MyRoutine* rtn) // RTN rtn)
-{
-	//MyRoutine* rtn = new MyRoutine(rtn);
-	list<MyRoutine*>* rtns = (list<MyRoutine*>*) v;
-	MyRoutine* tmp = find_routine_in_list(rtns, rtn);
-
-	if (tmp)
-	{
-		tmp->rtn_call_count++;
-		delete rtn;
-	}
-	else
-	{
-		rtn->rtn_call_count++;
-		((list<MyRoutine*>*)rtns)->push_back(rtn);
-	}
-
-	return;
-}
-
-
-VOID InstructionFunc(INS ins, VOID* v)
-{
-	// maybe should cast v to list<MyRoutine>* before
-	MyRoutine* rtn = new MyRoutine(ins);
-	INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inst, IARG_PTR, v, IARG_PTR, rtn, IARG_END);
-}
-
-
-VOID RoutineFunc(RTN rtn, VOID* v)
-{
-	// maybe should cast v to list<MyRoutine>* before
-	MyRoutine* new_rtn = new MyRoutine(rtn);
-cout << "bla" << endl;
-	RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)docount_rtn, IARG_PTR, v, IARG_PTR, new_rtn, IARG_END);
-}
-
-
-VOID Fini(INT32 code, VOID* v) // must keep the code parameter!!
-{
-	list<MyRoutine*>* rtns = (list<MyRoutine*>*) v;
-	rtns->empty();
-	cout << "fini" << endl;
-	//cerr << "Count " << ins_count << endl;
-	return;
-}
+/* ===================================================================== */
+/* Main                                                                  */
+/* ===================================================================== */
 
 int main(int argc, char* argv[])
 {
-	PIN_InitSymbols();
-	if (PIN_Init(argc, argv))
-	{
-		return Usage();
-	}
+    // Initialize symbol table code, needed for rtn instrumentation
+    PIN_InitSymbols();
 
-	list<MyRoutine*> rtns;
+    outFile.open("proccount.out");
 
-	INS_AddInstrumentFunction(InstructionFunc, &rtns);
-	RTN_AddInstrumentFunction(RoutineFunc, &rtns);
+    // Initialize pin
+    if (PIN_Init(argc, argv)) return Usage();
 
-	PIN_AddFiniFunction(Fini, (&rtns));
+    // Register Routine to be called to instrument rtn
+    RTN_AddInstrumentFunction(Routine, 0);
 
-	PIN_StartProgram();
+    // Register Fini to be called when the application exits
+    PIN_AddFiniFunction(Fini, 0);
 
+    // Start the program, never returns
+    PIN_StartProgram();
 
-	return 0;
+    return 0;
 }
