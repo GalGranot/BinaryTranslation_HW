@@ -51,13 +51,13 @@ bool routineCompare(ROUTINE_COUNT* routine1, ROUTINE_COUNT* routine2)
 
 void printRtnInfo(ROUTINE_COUNT* rc)
 {
-    outFile << rc->_image << ", ";
-	outFile << "0x" << hex << rc->imgAddress << ", ";
-	outFile << rc->_name << ", ";
-	outFile << "0x" << hex << rc->_address << ", ";
-	outFile << dec << rc->_icount << ", ";
-	outFile << dec << rc->rtnCtr;
-	outFile << endl;
+    outFile << rc->_image << ", "
+	<< "0x" << hex << rc->imgAddress << ", "
+	<< rc->_name << ", "
+	<< "0x" << hex << rc->_address << ", "
+	<< dec << rc->_icount << ", "
+	<< dec << rc->rtnCtr
+	<< endl;
     return;
 }
 

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2004-2021 Intel Corporation.
- * SPDX-License-Identifier: MIT
+ex1.cpp
  */
 
 //
 // This tool counts the number of times a routine is executed and
-// the number of instructions executed in a routine
+// the number of instructions executed in a routine, and outputs 
+// the routine's and instruction's name and address.
 //
 
 #include <fstream>
@@ -14,12 +14,12 @@
 #include <string.h>
 #include <vector>
 #include "pin.H"
+
 using std::cerr;
 using std::dec;
 using std::endl;
 using std::hex;
 using std::ofstream;
-using std::setw;
 using std::string;
 using std::vector;
 
@@ -38,27 +38,22 @@ typedef struct RtnCount
     struct RtnCount* _next;
 } RTN_COUNT;
 
+
 bool CompareRTN_COUNT_PTR(RTN_COUNT * rp1, RTN_COUNT * rp2)
 {
     return rp1->_icount > rp2->_icount;
 }
 
+
 void print_rtn_info(RTN_COUNT* rc)
 	{
-		// IMG		image		= IMG_FindByAddress(this->rtn_address);
-		// ADDRINT	img_address = IMG_StartAddress(rc->_image);
-		// string	img_name	= IMG_Name(image);
-		// string	rtn_name	= RTN_Name(this->rtn);
-		// UINT32	inst_count	= RTN_NumIns(this->rtn);
-
-		//outFile << rc->_image << ", ";
-        outFile << rc->_image << ", ";
-		outFile << "0x" << hex << rc->_img_address << ", ";
-		outFile << rc->_name << ", ";
-		outFile << "0x" << hex << rc->_address << ", ";
-		outFile << dec << rc->_icount << ", ";
-		outFile << dec << rc->_rtnCount;
-		outFile << endl;
+        outFile << rc->_image << ", "
+		     << "0x" << hex << rc->_img_address << ", "
+		     << rc->_name << ", "
+		     << "0x" << hex << rc->_address << ", "
+		     << dec << rc->_icount << ", "
+		     << dec << rc->_rtnCount
+		     << endl;
 
 		return;
 	};
@@ -67,18 +62,11 @@ void print_rtn_info(RTN_COUNT* rc)
 // Linked list of instruction counts for each routine 
 RTN_COUNT* RtnList = 0;
 vector<RTN_COUNT*> RtnVec;
+//list<RTN_COUNT*> RtnVec;
 
 // This function is called before every instruction is executed
 VOID docount(UINT64* counter) { (*counter)++; }
 
-const char* StripPath(const char* path)
-{
-    const char* file = strrchr(path, '/');
-    if (file)
-        return file + 1;
-    else
-        return path;
-}
 
 // Pin calls this function every time a new rtn is executed
 VOID Routine(RTN rtn, VOID* v)
@@ -89,7 +77,6 @@ VOID Routine(RTN rtn, VOID* v)
     // The RTN goes away when the image is unloaded, so save it now
     // because we need it in the fini
     rc->_name     = RTN_Name(rtn);
-    //rc->_image    = StripPath(IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str());
     rc->_image    = IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str();
     rc->_address  = RTN_Address(rtn);
     IMG		image		= IMG_FindByAddress(rc->_address);
@@ -122,15 +109,9 @@ VOID Routine(RTN rtn, VOID* v)
 // It prints the name and count for each procedure
 VOID Fini(INT32 code, VOID* v)
 {
-    outFile << setw(23) << "Procedure"
-            << " " << setw(15) << "Image"
-            << " " << setw(18) << "Image Address"
-            << " " << setw(18) << "RTN Address"
-            << " " << setw(12) << "Calls"
-            << " " << setw(12) << "Instructions" << endl;
-
-
+    
     std::sort(RtnVec.begin(), RtnVec.end(), CompareRTN_COUNT_PTR);
+    //RtnVec.sort(CompareRTN_COUNT_PTR);
 
     for(RTN_COUNT * rc : RtnVec)
     {
@@ -139,20 +120,10 @@ VOID Fini(INT32 code, VOID* v)
         {
             print_rtn_info(rc);
         }
-        //     outFile << setw(23) << rc->_name << " " << setw(15) << rc->_image << " " << setw(18) << hex << rc->_address << dec
-        //             << " " << setw(12) << rc->_rtnCount << " " << setw(12) << rc->_icount << endl;
+        delete rc;
     }
 
-    // for (RTN_COUNT* rc = RtnList; rc; rc = rc->_next)
-    // {
-        
-    //     if (rc->_icount > 0)
-    //     {
-    //         print_rtn_info(rc);
-    //     }
-    //     //     outFile << setw(23) << rc->_name << " " << setw(15) << rc->_image << " " << setw(18) << hex << rc->_address << dec
-    //     //             << " " << setw(12) << rc->_rtnCount << " " << setw(12) << rc->_icount << endl;
-    // }
+    outFile.close();
 }
 
 /* ===================================================================== */
@@ -176,12 +147,12 @@ int main(int argc, char* argv[])
     // Initialize symbol table code, needed for rtn instrumentation
     PIN_InitSymbols();
 
-    outFile.open("proccount.out");
+    outFile.open("rtn-output.csv");
 
     // Initialize pin
     if (PIN_Init(argc, argv)) return Usage();
 
-    // Register Routine to be called to instrument rtn
+    // Register Routine function to be called to instrument rtn
     RTN_AddInstrumentFunction(Routine, 0);
 
     // Register Fini to be called when the application exits
