@@ -13,14 +13,17 @@ ex1.cpp
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <map>
 #include "pin.H"
 
 using std::cerr;
 using std::dec;
-using std::endl;
 using std::hex;
+using std::endl;
+using std::cout;
 using std::ofstream;
 using std::string;
+using std::map;
 using std::vector;
 
 ofstream outFile;
@@ -29,16 +32,15 @@ ofstream outFile;
 typedef struct RtnCount
 {
     string _name;
-    string _image;
     ADDRINT _address;
-    ADDRINT _img_address;
-    RTN _rtn;
     UINT64 _rtnCount;
     UINT64 _icount;
-    struct RtnCount* _next;
+    //string _image;
+    //ADDRINT _img_address;
+    //RTN _rtn;
 } RTN_COUNT;
 
-typedef struct Loop
+/*typedef struct Loop
 {
     ADDRINT loop_address;
     ADDRINT rtn_address;
@@ -51,7 +53,38 @@ typedef struct Loop
 
     // struct Loop* next;
     
-} LOOP_COUNT;
+} LOOP_COUNT;*/
+
+class LOOP_COUNT 
+{
+
+public: 
+    ADDRINT loop_address;
+    UINT64  count_seen;
+    UINT64  CountLoopInvoked;
+    UINT64  mean_taken;
+    UINT64  diff_count;
+    //string  rtn_name;
+    ADDRINT rtn_address;
+    //UINT64  icount_in_rtn;
+    //UINT64  rtn_count;
+
+    LOOP_COUNT() : loop_address(0), count_seen(0), 
+         /*icount_in_rtn(0), rtn_count(0),*/ CountLoopInvoked(0), diff_count(0), rtn_address(0)  {}
+
+    LOOP_COUNT(INS ins, ADDRINT loop_address) : loop_address(loop_address), count_seen(0), 
+        /*icount_in_rtn(0), rtn_count(0),*/ CountLoopInvoked(0), diff_count(0), rtn_address(0)  
+        {
+            // RTN rtn = INS_Rtn(ins);
+            // this->rtn_name = RTN_Name(rtn);
+            // this->rtn_address = RTN_Address(rtn);
+        }
+
+};
+
+
+map<ADDRINT, LOOP_COUNT> map_loop;
+map<ADDRINT, RTN_COUNT> map_routine;
 
 
 bool CompareRTN_COUNT_PTR(RTN_COUNT * rp1, RTN_COUNT * rp2)
@@ -59,85 +92,121 @@ bool CompareRTN_COUNT_PTR(RTN_COUNT * rp1, RTN_COUNT * rp2)
     return rp1->_icount > rp2->_icount;
 }
 
-bool CompareLOOP_COUNT_PTR(LOOP_COUNT * lp1, LOOP_COUNT * lp2)
+bool CompareLOOP_COUNT_PTR(LOOP_COUNT lp1, LOOP_COUNT lp2)
 {
-    return lp1->count_seen > lp2->count_seen;
+    return lp1.count_seen > lp2.count_seen;
 }
 
 
-void print_rtn_info(RTN_COUNT* rc)
-	{
-        outFile << rc->_image << ", "
-		     << "0x" << hex << rc->_img_address << ", "
-		     << rc->_name << ", "
-		     << "0x" << hex << rc->_address << ", "
-		     << dec << rc->_icount << ", "
-		     << dec << rc->_rtnCount
-		     << endl;
+// void print_rtn_info(RTN_COUNT* rc)
+// 	{
+//         outFile << rc->_image << ", "
+// 		     << "0x" << hex << rc->_img_address << ", "
+// 		     << rc->_name << ", "
+// 		     << "0x" << hex << rc->_address << ", "
+// 		     << dec << rc->_icount << ", "
+// 		     << dec << rc->_rtnCount
+// 		     << endl;
 
-		return;
-	};
+// 		return;
+// 	};
 
 
 void print_loop_info(LOOP_COUNT * lc)
 {
-    UINT64 mean_taken = 0;
+    RTN_COUNT rtn = map_routine[lc->rtn_address];
+    // cout << "curr rtn name is " << rtn._name << " and rtn_address is " << lc->rtn_address 
+    // << " _address is " << rtn._address << endl;
     outFile << "0x" << lc->loop_address << ", "
             << lc->count_seen << ", "
             << lc->CountLoopInvoked << ", "
-            << mean_taken << ", "
+            << lc->mean_taken << ", "
             << lc->diff_count << ", "
-            << lc->rtn_name << ", "
+            << rtn._name << ", "
             << lc->rtn_address << ", "
-            << lc->icount_in_rtn << ", "
-            << lc->rtn_count << ", "
+            << rtn._icount << ", "
+            << rtn._rtnCount
             << endl;
 
     return;
 }
-// bla
-// Linked list of instruction counts for each routine 
-// RTN_COUNT* RtnList = 0;
-vector<RTN_COUNT*> RtnVec;
-// LOOP_COUNT* LoopList = 0; 
-vector<LOOP_COUNT*> LoopVec;
-//list<RTN_COUNT*> RtnVec;
+
 
 // This function is called before every instruction is executed
 VOID docount(UINT64* counter) { (*counter)++; }
-VOID docount_inc_branch(INT32 taken, UINT64* counter){ if (taken) (*counter)++; }
+VOID docount_branch_if_taken(INT32 taken, UINT64* counter){ if (taken) (*counter)++; }
 
 
-
-/*VOID Instruction(INS ins, void* v)
+VOID process_Routine(ADDRINT rtn_address)
 {
-    // we dont want to count returns!
-    if (INS_IsRet(ins))
+    RTN_COUNT rc;
+    UINT64      counter = 0;
+    RTN_COUNT* rc_p;
+    RTN rtn  = RTN_FindByAddress(rtn_address);
+
+    // The RTN goes away when the image is unloaded, so save it now
+    // because we need it in the fini
+    rc._name     = RTN_Name(rtn);
+    rc._address  = rtn_address;
+    rc._rtnCount   = 1;
+
+    RTN_Open(rtn);
+
+    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
     {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_return, IARG_BRANCH_TAKEN, IARG_END);
+        // Insert a call to docount to increment the instruction counter for this rtn
+        // INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(rc->_icount), IARG_END);
+        counter++;
     }
-    // we dont want to count syscalls!
-    else if (INS_IsSyscall(ins))
-    {
-        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_syscall, IARG_BRANCH_TAKEN, IARG_END);
-    }
-    // we WANT to count DirectControlFlow!
-    else if (INS_IsDirectControlFlow(ins))
-    {
-        if (INS_IsCall(ins))
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_call, IARG_BRANCH_TAKEN, IARG_END);
-        else
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch, IARG_BRANCH_TAKEN, IARG_END);
-    }
-    // we dont want to count IndirectControlFlow!
-    else if (INS_IsIndirectControlFlow(ins))
-    {
-        if (INS_IsCall(ins))
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_call_indirect, IARG_BRANCH_TAKEN, IARG_END);
-        else
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch_indirect, IARG_BRANCH_TAKEN, IARG_END);
-    }
-}*/
+
+    rc._icount = counter;
+
+    map_routine[rc._address] = rc;
+
+    RTN_Close(rtn);
+
+}
+
+
+VOID Instruction(INS ins, VOID* V)
+{
+    if (/*!INS_IsRet(ins) && !INS_IsSyscall(ins) &&*/ INS_IsDirectControlFlow(ins) && !INS_IsCall(ins))
+        {
+            if (INS_DirectControlFlowTargetAddress(ins) < INS_Address(ins))
+            {
+                LOOP_COUNT* loop;
+                ADDRINT loop_target_addr = INS_DirectControlFlowTargetAddress(ins);
+                auto it = map_loop.find(loop_target_addr); 
+                auto& lc = it;
+                if (lc == map_loop.end()) // for a new loop
+                {
+                    loop = new LOOP_COUNT(ins, loop_target_addr);
+                    map_loop[loop_target_addr] = *loop;
+                    delete loop;
+                    loop = &(map_loop[loop_target_addr]);
+                    loop->rtn_address = RTN_Address(INS_Rtn(ins));
+                    if (!(map_routine.count(loop->rtn_address)))
+                    {
+                        process_Routine(loop->rtn_address);
+                    }
+                    else
+                    {
+                        //map_routine[loop->rtn_address]._rtnCount;
+                    }
+                    // lc = map_loop[loop_target_addr].second;
+                }
+                else
+                {
+                    loop = &(lc->second);
+                }
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_branch_if_taken, IARG_BRANCH_TAKEN, IARG_PTR, &(loop->count_seen), IARG_END);   
+            }   
+            // printf("found !INS_IsRet && !INS_IsSyscall && INS_IsDirectControlFlow\n");
+        }
+}
+
+
+
 
 
 // Pin calls this function every time a new rtn is executed
@@ -145,74 +214,79 @@ VOID Routine(RTN rtn, VOID* v)
 {
     // Allocate a counter for this routine
     // RTN_COUNT* rc = new RTN_COUNT;
-    LOOP_COUNT* lc = new LOOP_COUNT;
+    RTN_COUNT rc;
+    // LOOP_COUNT* lc = new LOOP_COUNT;
+
 
     // The RTN goes away when the image is unloaded, so save it now
     // because we need it in the fini
     // lc->loop_address = IMG_StartAddress(image); 
-    lc->rtn_name     = RTN_Name(rtn);
-    // lc->_image    = IMG_Name(SEC_Img(RTN_Sec(rtn))).c_str();
-    lc->rtn_address  = RTN_Address(rtn);
-    // IMG		image		= IMG_FindByAddress(rc->_address);
-    lc->count_seen   = 0;
-    lc->icount_in_rtn   = 0;
-    lc->rtn_count = 0;
-    lc->CountLoopInvoked = 0;
-    lc->diff_count = 0;
+    rc._name     = RTN_Name(rtn);
+    rc._address  = RTN_Address(rtn);
+    rc._rtnCount   = 0;
+    rc._icount = 0;
 
-
-    LoopVec.push_back(lc);
+    map_routine[rc._address] = rc;
 
     RTN_Open(rtn);
 
     // Insert a call at the entry point of a routine to increment the call count
-    RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(lc->rtn_count), IARG_END);
+    RTN_InsertCall(rtn, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(map_routine[rc._address]._rtnCount), IARG_END);
+    
 
     // For each instruction of the routine
-    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
-    {
-        // we dont want to count returns!
-        if (!INS_IsRet(ins) && !INS_IsSyscall(ins) && INS_IsDirectControlFlow(ins) && !INS_IsCall(ins))
-        {
-            INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch, IARG_BRANCH_TAKEN, IARG_PTR, &(lc->rtn_count), IARG_END);
-            // printf("found !INS_IsRet && !INS_IsSyscall && INS_IsDirectControlFlow\n");
-        }
-        // // we dont want to count syscalls!
-        // else if (INS_IsSyscall(ins))
-        // {
-        //     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_syscall, IARG_BRANCH_TAKEN, IARG_END);
-        // }
-        // // we WANT to count DirectControlFlow!
-        // else if (INS_IsDirectControlFlow(ins))
-        // {
-        //     if (INS_IsCall(ins))
-        //         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_call, IARG_BRANCH_TAKEN, IARG_END);
-        //     else
-        //         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch, IARG_BRANCH_TAKEN, IARG_END);
-        // }
-        // // Insert a call to docount to increment the instruction counter for this rtn
-        // INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(rc->_icount), IARG_END);
-    }
+    // for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
+    // {
+    //     // we dont want to count returns!
+    //     if (!INS_IsRet(ins) && !INS_IsSyscall(ins) && INS_IsDirectControlFlow(ins) && !INS_IsCall(ins))
+    //     {
+    //         //INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch, IARG_BRANCH_TAKEN, IARG_PTR, &(lc->rtn_count), IARG_END);
+    //         // printf("found !INS_IsRet && !INS_IsSyscall && INS_IsDirectControlFlow\n");
+    //     }
+    //     // // we dont want to count syscalls!
+    //     // else if (INS_IsSyscall(ins))
+    //     // {
+    //     //     INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_syscall, IARG_BRANCH_TAKEN, IARG_END);
+    //     // }
+    //     // // we WANT to count DirectControlFlow!
+    //     // else if (INS_IsDirectControlFlow(ins))
+    //     // {
+    //     //     if (INS_IsCall(ins))
+    //     //         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_call, IARG_BRANCH_TAKEN, IARG_END);
+    //     //     else
+    //     //         INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount_inc_branch, IARG_BRANCH_TAKEN, IARG_END);
+    //     // }
+    //     // // Insert a call to docount to increment the instruction counter for this rtn
+    //     // INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_PTR, &(rc->_icount), IARG_END);
+    // }
 
     RTN_Close(rtn);
 }
+
+
 
 // This function is called when the application exits
 // It prints the name and count for each procedure
 VOID Fini(INT32 code, VOID* v)
 {
-    
-    std::sort(LoopVec.begin(), LoopVec.end(), CompareLOOP_COUNT_PTR);
+
+    vector<LOOP_COUNT> vec;
+    for(auto it : map_loop)
+    {
+        vec.push_back((it.second));
+    }
+    std::sort(vec.begin(), vec.end(), CompareLOOP_COUNT_PTR);
+    // std::sort(LoopVec.begin(), LoopVec.end(), CompareLOOP_COUNT_PTR);
     //RtnVec.sort(CompareRTN_COUNT_PTR);
 
-    for(LOOP_COUNT * lc : LoopVec)
+    for(auto lc : vec)
     {
         
-        if (lc->count_seen > 0)
+        if (lc.count_seen > 0)
         {
-            print_loop_info(lc);
+            print_loop_info(&lc);
         }
-        delete lc;
+        // delete lc;
     }
 
     outFile.close();
@@ -245,13 +319,13 @@ int main(int argc, char* argv[])
     if (PIN_Init(argc, argv)) return Usage();
 
     // Register Instruction function to be called to instrument ins
-    //INS_AddInstrumentFunction(Instruction, 0);
+    INS_AddInstrumentFunction(Instruction, 0);
 
     // Register Routine function to be called to instrument rtn
     RTN_AddInstrumentFunction(Routine, 0);
 
     // Register Fini to be called when the application exits
-    // PIN_AddFiniFunction(Fini, 0);
+    PIN_AddFiniFunction(Fini, 0);
 
     // Start the program, never returns
     PIN_StartProgram();
