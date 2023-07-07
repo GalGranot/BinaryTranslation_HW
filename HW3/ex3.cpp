@@ -150,9 +150,9 @@ map<ADDRINT, LOOP_COUNT> loopMap;
 map<ADDRINT, RTN_COUNT> rtnMap;
 
 
-bool CompareRTN_COUNT_PTR(RTN_COUNT* rp1, RTN_COUNT* rp2)
+bool CompareRTN_COUNT_PTR(RTN_COUNT rp1, RTN_COUNT rp2)
 {
-    return rp1->rtnInsCount > rp2->rtnInsCount;
+    return rp1.rtnInsCount > rp2.rtnInsCount;
 }
 
 bool CompareLOOP_COUNT_PTR(LOOP_COUNT lp1, LOOP_COUNT lp2)
@@ -185,9 +185,9 @@ VOID docount_rtn(UINT64 head, RTN_COUNT* rtn)
 { 
     if (head)
     {
-        cout << "before rtn->rtnCallCount = " << rtn->rtnCallCount<< endl;
+        // cout << "before rtn->rtnCallCount = " << rtn->rtnCallCount<< endl;
         (rtn->rtnCallCount)++; 
-        cout << "after rtn->rtnCallCount = " << rtn->rtnCallCount<< endl;
+        // cout << "after rtn->rtnCallCount = " << rtn->rtnCallCount<< endl;
     }
     (rtn->rtnInsCount)++; 
 }
@@ -308,24 +308,43 @@ VOID Fini(INT32 code, VOID* v)
 {
     ofstream rtnFile;
     vector<LOOP_COUNT> vec;
-    for (auto it : loopMap)
+	vector<RTN_COUNT> rtnVec;
+    for (auto it : rtnMap)
     {
-        vec.push_back((it.second));
+        rtnVec.push_back((it.second));
     }
     //for next project
-    std::sort(vec.begin(), vec.end(), CompareLOOP_COUNT_PTR_BY_INS_COUNT);
-    int i = 1;
-    rtnFile.open("rtnFile.txt");
-    for (auto lc : vec)
-    {
-        if (lc.countSeen == 0 || lc.countLoopInvoked == 0)
-        {
-            continue;
-        }
-        rtnFile << lc.rtnLoopAddress << endl;
-        if(i++ > 10)
-            break;
-    }
+    std::sort(rtnVec.begin(), rtnVec.end(), CompareRTN_COUNT_PTR);
+	int i = 0;
+	int j = 0;
+	rtnFile.open("rtnFile.txt");
+	while (j < 10)
+	{
+		// LOOP_COUNT lc = vec[i];
+		RTN_COUNT rc = rtnVec[i];
+		
+		if (rc.rtnInsCount == 0 ) //|| rc.countLoopInvoked == 0)
+		{
+			i++;
+			continue;
+		}
+		RTN_COUNT rtn = rc;
+		// lc = 
+		// cout << "0x" << hex << lc.loopAddress << ", "
+        // << dec << lc.countSeen << ", "
+        // << lc.countLoopInvoked << ", "
+        //<< meanTaken << ", "
+        // << lc.diffCount << ", "
+        // cout << rtn.rtnName << ", "
+        // // << "0x" << hex << lc.rtnLoopAddress << ", "
+        // << dec << rtn.rtnInsCount << ", "
+        // << rtn.rtnCallCount
+        // << endl;
+		rtnFile << hex << rtn.rtnAddress << endl;
+		i++;
+		j++;
+	}
+    
     rtnFile.close();
 
     std::sort(vec.begin(), vec.end(), CompareLOOP_COUNT_PTR);
@@ -1046,7 +1065,7 @@ int find_candidate_rtns_for_translation(IMG img)
         {	
             RTN rtn = RTN_FindByAddress(rtn_address);
 			if (rtn == RTN_Invalid()) {
-			  cerr << "Warning: invalid routine " << RTN_Name(rtn) << endl;
+			  cerr << "Warning: invalid routine! " /*<< RTN_Name(rtn)*/ << endl;
   			  continue;
 			}
 
@@ -1350,9 +1369,6 @@ INT32 Usage()
 }
 
 
-/* ===================================================================== */
-/* Main                                                                  */
-/* ===================================================================== */
 
 /* ===================================================================== */
 /* Main                                                                  */
@@ -1406,13 +1422,21 @@ int main(int argc, char* argv[])
 
         ifstream rtnFile;
         rtnFile.open("rtnFile.txt");
+		if (rtnFile.fail())
+		{
+			cerr << endl << endl
+			<< "Something wrong with rtnFile.txt. try running with \"-prof\" option first!"
+			<< endl << endl << endl;
+			return Usage();
+		}
         string line;
-        for(int i = 0; i < 10; i++)
+        for(int i = 0; i < 10 && rtnFile.good(); i++)
         {
             std::getline(rtnFile, line);
             const char* str = line.c_str();
             char* end;
             ADDRINT address = static_cast<ADDRINT>(strtoul(str, &end, 16));
+			// cout << "RTN_address is " << address << " rtn name is " << RTN_FindNameByAddress(address) <<  endl;
             rtnVector.push_back(address);
         }
         // Register ImageLoad
@@ -1423,32 +1447,17 @@ int main(int argc, char* argv[])
     }
     else 
     {
-        // Register ImageLoad
-	    IMG_AddInstrumentFunction(ImageLoad, 0);
+		return Usage();
+        // // Register ImageLoad
+	    // IMG_AddInstrumentFunction(ImageLoad, 0);
 
-        // Start the program, never returns
-        PIN_StartProgramProbed();
+        // // Start the program, never returns
+        // PIN_StartProgramProbed();
     }
 
     return 0;
 }
 
-
-// int main(int argc, char * argv[])
-// {
-
-//     // Initialize pin & symbol manager
-//     //out = new std::ofstream("xed-print.out");
-
-//     if( PIN_Init(argc,argv) )
-//         return Usage();
-
-//     PIN_InitSymbols();
-
-	
-
-//     return 0;
-// }
 
 /* ===================================================================== */
 /* eof */
