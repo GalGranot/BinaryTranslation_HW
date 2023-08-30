@@ -1052,125 +1052,124 @@ int find_candidate_rtns_for_translation(IMG img)
 {
 	map<ADDRINT, xed_decoded_inst_t> local_instrs_map;
 	local_instrs_map.clear();
-
-	// go over routines and check if they are candidates for translation and mark them for translation:
-
 	for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
 	{
-		if ( !SEC_IsExecutable(sec) || SEC_IsWriteable(sec) || !SEC_Address(sec) )
+		if (!SEC_IsExecutable(sec) || SEC_IsWriteable(sec) || !SEC_Address(sec))
 			continue;
 
 		for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
 		{
-
 			if (rtn == RTN_Invalid())
 			{
 				cerr << "Warning: invalid routine " << RTN_Name(rtn) << endl;
 				continue;
 			}
 
-			if (/*rtn doesn't call any hot rtn*/ || /*rtn isn't valid for translation, reasons at eof*/)
+			ADDRINT rtnAddress = RTN_Address(rtn);
+			if (/*rtn address doesn't appear as a caller to a hot rtn*/)
 				continue;
-
-			//if got here - rtn is a valid caller of a hot rtn for inlining
-			translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);
+			//if here - current rtn calls a hot rtn we want to inline. find call site
+			translated_rtn[translated_rtn_num].rtn_addr = rtnAddress;
 			translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
 
-			// Open the RTN.
 			RTN_Open(rtn);
-
 			for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
 			{
-				ADDRINT addr = INS_Address(ins);
-
-				//debug print of orig instruction:
-				if (KnobVerbose) {
-					cerr << "old instr: ";
-					cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) << endl;
-					//xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
-				}
-
+				ADDRINT insAddress = INS_Address(ins);
+				//FIXME handle prologue epilogue ins
+				if (insAddress == /*call to hot rtn*/)
+				{
+					RTN rtnInlined = //FIXME from prof
+					RTN_Close(rtn);
+					RTN_Open(rtnInlined);
+					for (INS insInlined = RTN_InsHead(rtnInlined); INS_Valid(insInlined); insInlined = INS_Next(insInlined))
+					{
+						if (INS_IsRet(insInlined)) //FIXME other ins to ignore
+							continue;
+						ADDRINT insInlinedAddress = INS_Address(insInlined);
+						//add to TC
+						xed_decoded_inst_t xedd;
+						xed_error_enum_t xed_code;
+						xed_decoded_inst_zero_set_mode(&xedd, &dstate);
+						xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(insInlinedAddress), max_inst_len);
+						if (xed_code != XED_ERROR_NONE)
+						{
+							cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << insInlinedAddress << endl;
+							translated_rtn[translated_rtn_num].instr_map_entry = -1;
+							break;
+						}
+						// Save xed and addr into a map to be used later.
+						local_instrs_map[insInlinedAddress] = xedd;
+					} //endof ins of inlined rtn
+					RTN_Close(rtnInlined);
+					RTN_Open(rtn);
+					continue;
+				} //endof is call to hot rtn
+				//get instructions from caller
 				xed_decoded_inst_t xedd;
 				xed_error_enum_t xed_code;
 
 				xed_decoded_inst_zero_set_mode(&xedd, &dstate);
 
-				xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
-				if (xed_code != XED_ERROR_NONE) {
-					cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+				xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(insAddress), max_inst_len);
+				if (xed_code != XED_ERROR_NONE)
+				{
+					cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << insAddress << endl;
 					translated_rtn[translated_rtn_num].instr_map_entry = -1;
 					break;
 				}
 
 				// Save xed and addr into a map to be used later.
-				local_instrs_map[addr] = xedd;
-
-			} // end for INS...
-
-
-			// debug print of routine name:
-			if (KnobVerbose)
-				cerr << "rtn name: " << RTN_Name(rtn) << " : " << dec << translated_rtn_num << endl;
-
-			// Close the RTN.
+				local_instrs_map[insAddress] = xedd;
+			} //endof ins in caller rtn
 			RTN_Close(rtn);
-
 			translated_rtn_num++;
+		} //endof rtn
+	} //endof sec
 
-		} // end for RTN..
-	} // end for SEC...
-
-
-	// Go over the local_instrs_map map and add each instruction to the instr_map:
+	//loop over local_instrs_map and add ins to instr_map
 	int rtn_num = 0;
-
-	for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
+	for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++)
+	{
 		ADDRINT addr = iter->first;
 		xed_decoded_inst_t xedd = iter->second;
 
 		// Check if we are at a routine header:
-		if (translated_rtn[rtn_num].rtn_addr == addr) {
+		if (translated_rtn[rtn_num].rtn_addr == addr)
+		{
 			translated_rtn[rtn_num].instr_map_entry = num_of_instr_map_entries;
 			translated_rtn[rtn_num].isSafeForReplacedProbe = true;
 			rtn_num++;
 		}
-
-		//debug print of orig instruction:
-		if (KnobVerbose) {
-			char disasm_buf[2048];
-			xed_format_context(XED_SYNTAX_INTEL, &xedd, disasm_buf, 2048, static_cast<UINT64>(addr), 0, 0);
-			cerr << "0x" << hex << addr << ": " << disasm_buf << endl;
-		}
-
 		// Add instr into global instr_map:
 		int rc = add_new_instr_entry(&xedd, addr, xed_decoded_inst_get_length(&xedd));
-		if (rc < 0) {
+		if (rc < 0)
+		{
 			cerr << "ERROR: failed during instructon translation." << endl;
 			translated_rtn[rtn_num].instr_map_entry = -1;
 			break;
 		}
 
-		// Check if this is a direct call instr:    
+		// Check if this is a direct call instr:
+		//FIXME do we need this if we loop over callee ins elsewhere
+		/*
 		xed_category_enum_t category_enum = xed_decoded_inst_get_category(&xedd);
-		if (category_enum == XED_CATEGORY_CALL) {
+		if (category_enum == XED_CATEGORY_CALL)
+		{
 			xed_int64_t disp = xed_decoded_inst_get_branch_displacement(&xedd);
 			ADDRINT target_addr = addr + xed_decoded_inst_get_length(&xedd) + disp;
 			RTN rtn = RTN_FindByAddress(target_addr);
 			RTN_Open(rtn);
-			for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+			for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
+			{
 				ADDRINT addr = INS_Address(ins);
 				cerr << " Callee addr: " << std::hex << addr << "\n";
 			}
 			RTN_Close(rtn);
+			
 		}
-
-
-	} // end for map<...
-
-	return 0;
-
-
-	return 0;
+		*/
+	}
 }
 
 
@@ -1495,7 +1494,7 @@ int main(int argc, char* argv[])
 * requirements for inlining a routine
 * 1. routine only called from one site
 * 2. routine is hot (ie many calls)
-* 3. the call isn't to the beginning of a valid function
+* 3. the call is to the beginning of a valid function
 * 4. routine has only one return instruction
 * 5. routine doesn't use indirect calls/jumps/direct jumps to outside the function
 * 6. routine doesn't use negative RSP displacement or positive RBP displacement
