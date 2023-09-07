@@ -415,7 +415,7 @@ ADDRINT highest_sec_addr = 0;
 #define MAX_PROBE_JUMP_INSTR_BYTES  14
 
 // tc containing the new code:
-char *tc;	
+char *tc;
 int tc_cursor = 0;
 
 // instruction map with an entry for each new instruction:
@@ -1044,6 +1044,39 @@ int fix_instructions_displacements()
    return 0;
  }
 
+
+/*****************************************/
+/* reorder template */
+/*****************************************/
+
+class Edge
+{
+	ADDRINT source;
+	ADDRINT destination;
+	ADDRINT fallThrough;
+	int counter;
+	RTN rtn;
+
+	Edge(ADDRINT src, ADDRINT dest, ADDRINT fall) : source(src), destination(dest), fall(fallThrough), counter(0) {}
+};
+
+int reorder()
+{
+	vector<RTN> rtnReorderVector;
+	for (RTN rtn : rtnReorderVector)
+	{
+		RTN_Open(rtn);
+		for (INS ins = RTN_InsHead(ins); INS_Valid(ins); ins = INS_Next(ins))
+		{
+			if (/*ins to be translated, is jump to alh blah*/)
+			{
+				//get translated instruction
+			}
+			//add to TC
+		}
+		RTN_Close(rtn);
+	}
+}
 
 /*****************************************/
 /* find_candidate_rtns_for_translation() */
