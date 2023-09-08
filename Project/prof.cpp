@@ -56,16 +56,8 @@ public:
     UINT64 notTakenCount;
     bool singleSource;
 
-    Edge()
-    {
-        this->source = 0;
-        this->destination = 0;
-        this->fallThrough = 0;
-        this->rtnAddress = 0;
-        this->takenCount = 0;
-        this->notTakenCount = 0;
-        this->singleSource = 0;
-    }
+    Edge() : source(0), destination(0), fallThrough(0), rtnAddress(0), takenCount(0), notTakenCount(0), singleSource(0) {}
+
     Edge(ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : source(source), destination(destination),
         fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
 };
@@ -81,12 +73,12 @@ unordered_map<ADDRINT, Edge> edgesMap;
 =============================================================================*/
 void printEdge(const Edge& e)
 {
-    outFile << "0x" << hex << e.source << ", "
-        << "0x" << e.destination << ", "
-        << "0x" << e.fallThrough << ", "
-        << "0x" << e.rtnAddress << ", " << dec
-        << e.takenCount << ", "
-        << e.notTakenCount << ", " << e.singleSource << endl;
+    outFile << "0x" << hex << e.source << ","
+        << "0x" << e.destination << ","
+        << "0x" << e.fallThrough << ","
+        << "0x" << e.rtnAddress << "," << dec
+        << e.takenCount << ","
+        << e.notTakenCount << "," << e.singleSource << endl;
 }
 
 bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
@@ -143,6 +135,13 @@ VOID Trace(TRACE trc, VOID* v)
         {
             ADDRINT insFallThroughAddress = INS_NextAddress(insTail);
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
+
+            //ignore edges which connect different rtns
+            //RTN sourceRtn = RTN_FindByAddress(tailAddress);
+            //RTN targetRtn = RTN_FindByAddress(targetAddress);
+            //if (RTN_Id(sourceRtn) != RTN_Id(targetRtn))
+            //    continue;
+
             Edge edge(tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
             {
@@ -173,6 +172,7 @@ INT32 Usage()
 
 VOID Fini(INT32 code, VOID* v)
 {
+    outFile << "source,destination,fallthrough,rtn address,taken count,not taken count,single source" << endl;
     findTargetEdges();
 }
 
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
 
     if (KnobProf)
     {
-        outFile.open("loop-count.csv");
+        outFile.open("edge-count.csv");
         TRACE_AddInstrumentFunction(Trace, 0);
     }
 
