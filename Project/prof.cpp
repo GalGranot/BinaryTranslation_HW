@@ -1155,7 +1155,8 @@ VOID doCountEdge(INT32 taken, VOID* address)
 
 VOID Trace(TRACE trc, VOID* v)
 {
-    if (!IMG_IsMainExecutable(IMG_FindByAddress(TRACE_Address(trc))))
+    IMG img = IMG_FindByAddress(TRACE_Address(trc));
+    if (!IMG_Valid(img) || !IMG_IsMainExecutable(img))
         return;
 
     for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl))
