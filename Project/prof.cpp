@@ -1113,9 +1113,9 @@ unordered_map<ADDRINT, Edge> edgesMap;
 void printEdge(const Edge& e)
 {
     outFile << "0x" << hex << e.source << ", "
-        << "0x" << hex << e.destination << ", "
-        << "0x" << hex << e.fallThrough << ", "
-        << "0x" << hex << e.rtnAddress << ", "
+        << "0x" << e.destination << ", "
+        << "0x" << e.fallThrough << ", "
+        << "0x" << e.rtnAddress << ", " << dec
         << e.takenCount << ", "
         << e.notTakenCount << ", " << e.singleSource << endl;
 }
@@ -1169,9 +1169,9 @@ VOID Trace(TRACE trc, VOID* v)
         ADDRINT tailAddress = INS_Address(insTail);
         if (edgesMap.find(tailAddress) != edgesMap.end())
         {
-            INS insFallThrough = INS_Next(insTail);
+            ADDRINT insFallThroughAddress = INS_NextAddress(insTail);
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
-            Edge edge(tailAddress, targetAddress, INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
+            Edge edge(tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
             {
                 Edge currEdge = pair.second;
