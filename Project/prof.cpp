@@ -1093,6 +1093,16 @@ public:
     UINT64 notTakenCount;
     bool singleSource;
 
+    Edge()
+    {
+        this->source = 0;
+        this->destination = 0;
+        this->fallThrough = 0;
+        this->rtnAddress = 0;
+        this->takenCount = 0;
+        this->notTakenCount = 0;
+        this->singleSource = 0;
+    }
     Edge(ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : source(source), destination(destination),
         fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
 };
