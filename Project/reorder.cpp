@@ -1569,9 +1569,10 @@ class Edge
     ADDRINT rtnAddress;
     UINT64 takenCount;
     UINT64 notTakenCount;
+    bool singleSource;
 
     Edge(ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : source(source), destination(destination),
-        fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), notTakenCount(0) {}
+        fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
 };
 
 unordered_map<INS, Edge> edgesMap;
@@ -1603,10 +1604,54 @@ VOID Trace(TRACE trc, VOID* v)
             INS insFallThrough = INS_Next(insTail);
             INS insJump = INS_DirectControlFlowTargetAddress(insTail);
             Edge edge(INS_Address(insTail), INS_Address(insJump), INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
+            ADDRINT targetAddress = INS_Address(insJump);
+            for (const auto& pair : edgesMap)
+            {
+                Edge currEdge = pair.second;
+                if (currEdge.destination == targetAddress)
+                {
+                    currEdge.singleSource = false;
+                    edge.singleSource = false;
+                }
+            }
             edgesMap[insTail] = edge;
+        }
+        else //edge found
+        {
         }
         INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &edgesMap[insTail], IARG_END);
     }
+}
+
+bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->countTaken > e2->countTaken; }
+
+void printEdge(Edge* e)
+{
+    outFile << "0x" << hex << e->source << ", "
+        << "0x" << hex << e->destination << ", "
+        << "0x" << hex << e->fallThrough << ", "
+        << "0x" << hex << e->rtnADdress << ", "
+        << e->takenCount << ", "
+        << e->notTakenCount << ", " << singleSource << endl;
+}
+
+void printLoopInfo(LOOP_COUNT* lc)
+{
+    // cout << "printing to file" << endl;
+    RTN_COUNT rtn = rtnMap[lc->rtnLoopAddress];
+    double meanTaken = lc->countLoopInvoked ? lc->countSeen / lc->countLoopInvoked : 0;
+    outFile << "0x" << hex << lc->loopAddress << ", "
+        << dec << lc->countSeen << ", "
+        << /*dec <<*/ lc->countLoopInvoked << ", "
+        << meanTaken << ", "
+        << /*dec <<*/ lc->diffCount << ", "
+        << rtn.rtnName << ", "
+        << "0x" << hex << lc->rtnLoopAddress << ", "
+        << dec << rtn.rtnInsCount << ", "
+        // << dec << (rtn.rtnCallCount ? rtn.rtnCallCount : 1)
+        << rtn.rtnCallCount
+        << endl;
+    return;
 }
 
 vector<Edge> findTargetEdges()
@@ -1616,12 +1661,17 @@ vector<Edge> findTargetEdges()
     for (const auto& pair : edgesMap)
     {
         Edge edge = pair.second;
-        if(!(edge.countTaken > edge.countNotTaken))
+        if( (edge.countTaken > edge.countNotTaken)  )
             edgesByRtnMap[edge.rtnAddress].push_back(edge);
     }
     for (const auto& pair : edgesByRtnMap)
     {
         vector<Edge> rtnEdges = pair.second;
+        if (rtnEdges.empty())
+            continue;
+        std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
+        for (const auto& e : rtnEdges)
+            printEdge(e);
     }
 }
 
