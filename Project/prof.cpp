@@ -1108,7 +1108,7 @@ public:
 };
 
 ofstream outFile;
-unordered_map<INS, Edge> edgesMap;
+unordered_map<ADDRINT, Edge> edgesMap;
 
 void printEdge(const Edge& e)
 {
@@ -1165,11 +1165,12 @@ VOID Trace(TRACE trc, VOID* v)
         INS insTail = BBL_InsTail(bbl);
         if (!INS_IsDirectControlFlow(insTail))
             continue;
-        if (edgesMap.find(insTail) != edgesMap.end())
+        ADDRINT tailAddress = INS_Address(insTail);
+        if (edgesMap.find(tailAddress) != edgesMap.end())
         {
             INS insFallThrough = INS_Next(insTail);
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
-            Edge edge(INS_Address(insTail), targetAddress, INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
+            Edge edge(tailAddress, targetAddress, INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
             {
                 Edge currEdge = pair.second;
@@ -1179,13 +1180,13 @@ VOID Trace(TRACE trc, VOID* v)
                     edge.singleSource = false;
                 }
             }
-            edgesMap[insTail] = edge;
+            edgesMap[tailAddress] = edge;
         }
         else //edge found
         {
             ;
         }
-        INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &edgesMap[insTail], IARG_END);
+        INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[tailAddress]), IARG_END);
     }
 }
 
