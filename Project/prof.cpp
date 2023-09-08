@@ -46,6 +46,7 @@ extern "C" {
 #include "xed-interface.h"
 }
 #include <iostream>
+#include <fstream>
 #include <unordered_map>
 #include <iomanip>
 #include <fstream>
@@ -77,7 +78,7 @@ KNOB<BOOL>   KnobDumpTranslatedCode(KNOB_MODE_WRITEONCE,    "pintool",
 KNOB<BOOL>   KnobDoNotCommitTranslatedCode(KNOB_MODE_WRITEONCE,    "pintool",
     "no_tc_commit", "0", "Do not commit translated code");
 
-KNOB<BOOL> KnofProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profiling")
+KNOB<BOOL> KnofProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profiling");
 
 
 
@@ -1081,8 +1082,6 @@ KNOB<BOOL> KnofProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profili
 
 
 
-ofstream outFile;
-unordered_map<INS, Edge> edgesMap;
 class Edge
 {
 public:
@@ -1098,6 +1097,20 @@ public:
         fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
 };
 
+ofstream outFile;
+unordered_map<INS, Edge> edgesMap;
+
+void printEdge(Edge* e)
+{
+    outFile << "0x" << hex << e->source << ", "
+        << "0x" << hex << e->destination << ", "
+        << "0x" << hex << e->fallThrough << ", "
+        << "0x" << hex << e->rtnAddress << ", "
+        << e->takenCount << ", "
+        << e->notTakenCount << ", " << singleSource << endl;
+}
+
+bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
 /*FIXME vector<Edge>*/ void findTargetEdges()
 {
     vector<Edge> result;
@@ -1105,7 +1118,7 @@ public:
     for (const auto& pair : edgesMap)
     {
         Edge edge = pair.second;
-        if ((edge.countTaken > edge.countNotTaken))
+        if ((edge.takenCount > edge.notTakenCount))
             edgesByRtnMap[edge.rtnAddress].push_back(edge);
     }
     for (const auto& pair : edgesByRtnMap)
@@ -1119,7 +1132,6 @@ public:
     }
 }
 
-
 VOID doCountEdge(INT32 taken, VOID* address)
 {
     Edge* edgePtr = (Edge*)address;
@@ -1130,31 +1142,16 @@ VOID doCountEdge(INT32 taken, VOID* address)
 }
 
 
-
-VOID Fini(INT32 code, VOID* v)
-{
-    findTargetEdges();
-}
-bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
-
-
-INT32 Usage()
-{
-    cerr << "This Pintool counts the number of times a routine is executed" << endl;
-    cerr << "and the number of instructions executed in a routine" << endl;
-    cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
-    return -1;
-}
 VOID Trace(TRACE trc, VOID* v)
 {
     if (!IMG_IsMainExecutable(IMG_FindByAddress(TRACE_Address(trc))))
         return;
 
-    for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl));
+    for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
         if (!BBL_HasFallThrough(bbl))
             continue;
-        INS insTail = BBL_InsTail();
+        INS insTail = BBL_InsTail(bbl);
         if (!INS_IsDirectControlFlow(insTail))
             continue;
         if (edgesMap.find(insTail) != edgesMap.end())
@@ -1182,17 +1179,18 @@ VOID Trace(TRACE trc, VOID* v)
     }
 }
 
-void printEdge(Edge* e)
+INT32 Usage()
 {
-    outFile << "0x" << hex << e->source << ", "
-        << "0x" << hex << e->destination << ", "
-        << "0x" << hex << e->fallThrough << ", "
-        << "0x" << hex << e->rtnADdress << ", "
-        << e->takenCount << ", "
-        << e->notTakenCount << ", " << singleSource << endl;
+    cerr << "This Pintool counts the number of times a routine is executed" << endl;
+    cerr << "and the number of instructions executed in a routine" << endl;
+    cerr << endl << KNOB_BASE::StringKnobSummary() << endl;
+    return -1;
 }
 
-
+VOID Fini(INT32 code, VOID* v)
+{
+    findTargetEdges();
+}
 
 /* ===================================================================== */
 /* Main                                                                  */
@@ -1211,7 +1209,7 @@ int main(int argc, char* argv[])
     }
 
     // Register Instruction function to be called to instrument ins
-    INS_AddInstrumentFunction(Instruction, 0);
+    //INS_AddInstrumentFunction(Instruction, 0);
 
     // Register Fini to be called when the application exits
     PIN_AddFiniFunction(Fini, 0);
