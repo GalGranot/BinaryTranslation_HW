@@ -1110,7 +1110,8 @@ void printEdge(const Edge& e)
         << e.notTakenCount << ", " << e.singleSource << endl;
 }
 
-bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
+bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
+
 /*FIXME vector<Edge>*/ void findTargetEdges()
 {
     vector<Edge> result;
