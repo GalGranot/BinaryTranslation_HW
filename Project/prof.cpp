@@ -46,6 +46,7 @@ extern "C" {
 #include "xed-interface.h"
 }
 #include <iostream>
+#include <unordered_map>
 #include <iomanip>
 #include <fstream>
 #include <sys/mman.h>
@@ -1077,17 +1078,14 @@ KNOB<BOOL> KnofProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profili
 
 /* ===================================================================== */
 /* eof */
-/*gal code
 
 
-/*
-ex2.cpp
- */
 
 ofstream outFile;
 unordered_map<INS, Edge> edgesMap;
 class Edge
 {
+public:
     ADDRINT source;
     ADDRINT destination;
     ADDRINT fallThrough;
@@ -1099,6 +1097,27 @@ class Edge
     Edge(ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : source(source), destination(destination),
         fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
 };
+
+/*FIXME vector<Edge>*/ void findTargetEdges()
+{
+    vector<Edge> result;
+    unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
+    for (const auto& pair : edgesMap)
+    {
+        Edge edge = pair.second;
+        if ((edge.countTaken > edge.countNotTaken))
+            edgesByRtnMap[edge.rtnAddress].push_back(edge);
+    }
+    for (const auto& pair : edgesByRtnMap)
+    {
+        vector<Edge> rtnEdges = pair.second;
+        if (rtnEdges.empty())
+            continue;
+        std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
+        for (const auto& e : rtnEdges)
+            printEdge(e);
+    }
+}
 
 
 VOID doCountEdge(INT32 taken, VOID* address)
@@ -1116,7 +1135,7 @@ VOID Fini(INT32 code, VOID* v)
 {
     findTargetEdges();
 }
-bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->countTaken > e2->countTaken; }
+bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
 
 
 INT32 Usage()
@@ -1129,7 +1148,7 @@ INT32 Usage()
 VOID Trace(TRACE trc, VOID* v)
 {
     if (!IMG_IsMainExecutable(IMG_FindByAddress(TRACE_Address(trc))))
-        continue;
+        return;
 
     for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl));
     {
@@ -1157,6 +1176,7 @@ VOID Trace(TRACE trc, VOID* v)
         }
         else //edge found
         {
+            ;
         }
         INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &edgesMap[insTail], IARG_END);
     }
@@ -1172,26 +1192,7 @@ void printEdge(Edge* e)
         << e->notTakenCount << ", " << singleSource << endl;
 }
 
-vector<Edge> findTargetEdges()
-{
-    vector<Edge> result;
-    unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
-    for (const auto& pair : edgesMap)
-    {
-        Edge edge = pair.second;
-        if( (edge.countTaken > edge.countNotTaken)  )
-            edgesByRtnMap[edge.rtnAddress].push_back(edge);
-    }
-    for (const auto& pair : edgesByRtnMap)
-    {
-        vector<Edge> rtnEdges = pair.second;
-        if (rtnEdges.empty())
-            continue;
-        std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
-        for (const auto& e : rtnEdges)
-            printEdge(e);
-    }
-}
+
 
 /* ===================================================================== */
 /* Main                                                                  */
