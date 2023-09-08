@@ -78,7 +78,7 @@ KNOB<BOOL>   KnobDumpTranslatedCode(KNOB_MODE_WRITEONCE,    "pintool",
 KNOB<BOOL>   KnobDoNotCommitTranslatedCode(KNOB_MODE_WRITEONCE,    "pintool",
     "no_tc_commit", "0", "Do not commit translated code");
 
-KNOB<BOOL> KnofProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profiling");
+KNOB<BOOL> KnobProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profiling");
 
 
 
@@ -1107,7 +1107,7 @@ void printEdge(Edge* e)
         << "0x" << hex << e->fallThrough << ", "
         << "0x" << hex << e->rtnAddress << ", "
         << e->takenCount << ", "
-        << e->notTakenCount << ", " << singleSource << endl;
+        << e->notTakenCount << ", " << e->singleSource << endl;
 }
 
 bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
@@ -1128,7 +1128,7 @@ bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount
             continue;
         std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
         for (const auto& e : rtnEdges)
-            printEdge(e);
+            printEdge(&e);
     }
 }
 
@@ -1157,9 +1157,8 @@ VOID Trace(TRACE trc, VOID* v)
         if (edgesMap.find(insTail) != edgesMap.end())
         {
             INS insFallThrough = INS_Next(insTail);
-            INS insJump = INS_DirectControlFlowTargetAddress(insTail);
-            Edge edge(INS_Address(insTail), INS_Address(insJump), INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
             ADDRINT targetAddress = INS_Address(insJump);
+            Edge edge(INS_Address(insTail), targetAddress, INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
             {
                 Edge currEdge = pair.second;
