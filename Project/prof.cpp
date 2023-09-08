@@ -1100,14 +1100,14 @@ public:
 ofstream outFile;
 unordered_map<INS, Edge> edgesMap;
 
-void printEdge(Edge* e)
+void printEdge(const Edge& e)
 {
-    outFile << "0x" << hex << e->source << ", "
-        << "0x" << hex << e->destination << ", "
-        << "0x" << hex << e->fallThrough << ", "
-        << "0x" << hex << e->rtnAddress << ", "
-        << e->takenCount << ", "
-        << e->notTakenCount << ", " << e->singleSource << endl;
+    outFile << "0x" << hex << e.source << ", "
+        << "0x" << hex << e.destination << ", "
+        << "0x" << hex << e.fallThrough << ", "
+        << "0x" << hex << e.rtnAddress << ", "
+        << e.takenCount << ", "
+        << e.notTakenCount << ", " << e.singleSource << endl;
 }
 
 bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount; }
@@ -1128,7 +1128,7 @@ bool compareEdgePtr(Edge* e1, Edge* e2) { return e1->takenCount > e2->takenCount
             continue;
         std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
         for (const auto& e : rtnEdges)
-            printEdge(&e);
+            printEdge(e);
     }
 }
 
@@ -1157,7 +1157,7 @@ VOID Trace(TRACE trc, VOID* v)
         if (edgesMap.find(insTail) != edgesMap.end())
         {
             INS insFallThrough = INS_Next(insTail);
-            ADDRINT targetAddress = INS_Address(insJump);
+            ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
             Edge edge(INS_Address(insTail), targetAddress, INS_Address(insFallThrough), RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
             {
