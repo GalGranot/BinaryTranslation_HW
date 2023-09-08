@@ -1,6 +1,14 @@
 //prof.cpp
 
 /*=============================================================================
+* fixme
+=============================================================================*/
+/*
+* some edges get 0x0 address for some reason
+* if trying to access rtn's names, all addresses go to 0x0
+*/
+
+/*=============================================================================
 * include, using
 =============================================================================*/
 #include "pin.H"
@@ -137,10 +145,10 @@ VOID Trace(TRACE trc, VOID* v)
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
 
             //ignore edges which connect different rtns
-            //RTN sourceRtn = RTN_FindByAddress(tailAddress);
-            //RTN targetRtn = RTN_FindByAddress(targetAddress);
-            //if (RTN_Id(sourceRtn) != RTN_Id(targetRtn))
-            //    continue;
+            RTN sourceRtn = RTN_FindByAddress(tailAddress);
+            RTN targetRtn = RTN_FindByAddress(targetAddress);
+            if (RTN_Id(sourceRtn) != RTN_Id(targetRtn))
+                continue;
 
             Edge edge(tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
             for (const auto& pair : edgesMap)
