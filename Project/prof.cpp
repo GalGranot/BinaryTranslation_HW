@@ -3,7 +3,6 @@
 /*=============================================================================
 * include, using
 =============================================================================*/
-
 #include "pin.H"
 extern "C" {
 #include "xed-interface.h"
@@ -29,9 +28,9 @@ extern "C" {
 
 using namespace std;
 
-/*======================================================================*/
-/* commandline switches                                                 */
-/*======================================================================*/
+/*=============================================================================
+* command line switches
+=============================================================================*/
 KNOB<BOOL>   KnobVerbose(KNOB_MODE_WRITEONCE,    "pintool",
     "verbose", "0", "Verbose run");
 
@@ -46,7 +45,6 @@ KNOB<BOOL> KnobProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profili
 /*=============================================================================
 * classes
 =============================================================================*/
-
 class Edge
 {
 public:
@@ -81,8 +79,6 @@ unordered_map<ADDRINT, Edge> edgesMap;
 /*=============================================================================
 * global functions
 =============================================================================*/
-bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
-
 void printEdge(const Edge& e)
 {
     outFile << "0x" << hex << e.source << ", "
@@ -93,6 +89,7 @@ void printEdge(const Edge& e)
         << e.notTakenCount << ", " << e.singleSource << endl;
 }
 
+bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
 
 /*FIXME vector<Edge>*/ void findTargetEdges()
 {
@@ -111,12 +108,13 @@ void printEdge(const Edge& e)
             continue;
         std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
         for (const auto& e : rtnEdges)
-        {
             printEdge(e);
-        }
     }
 }
 
+/*=============================================================================
+* pintool functions
+=============================================================================*/
 VOID doCountEdge(INT32 taken, VOID* address)
 {
     Edge* edgePtr = (Edge*)address;
@@ -126,9 +124,7 @@ VOID doCountEdge(INT32 taken, VOID* address)
         (*edgePtr).notTakenCount++;
 }
 
-/*=============================================================================
-* pintool functions
-=============================================================================*/
+
 VOID Trace(TRACE trc, VOID* v)
 {
     IMG img = IMG_FindByAddress(TRACE_Address(trc));
@@ -159,6 +155,10 @@ VOID Trace(TRACE trc, VOID* v)
             }
             edgesMap[tailAddress] = edge;
         }
+        else //edge found
+        {
+            ;
+        }
         INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[tailAddress]), IARG_END);
     }
 }
@@ -173,7 +173,6 @@ INT32 Usage()
 
 VOID Fini(INT32 code, VOID* v)
 {
-    outFile << "Source,Destination,Fallthrough,Routine Address,Taken Count,Not Taken Count\n";
     findTargetEdges();
 }
 
@@ -188,9 +187,10 @@ int main(int argc, char* argv[])
 
     if (KnobProf)
     {
-        outFile.open("edge-count.csv");
+        outFile.open("loop-count.csv");
         TRACE_AddInstrumentFunction(Trace, 0);
     }
+
     // Register Instruction function to be called to instrument ins
     //INS_AddInstrumentFunction(Instruction, 0);
 
