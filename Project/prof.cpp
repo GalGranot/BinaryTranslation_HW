@@ -49,6 +49,7 @@ KNOB<BOOL>   KnobDoNotCommitTranslatedCode(KNOB_MODE_WRITEONCE,    "pintool",
     "no_tc_commit", "0", "Do not commit translated code");
 
 KNOB<BOOL> KnobProf(KNOB_MODE_WRITEONCE, "pintool", "prof", "0", "Enable profiling");
+KNOB<BOOL> KnobOpt(KNOB_MODE_WRITEONCE, "pintool", "opt", "0", "Enable optimization by reordering");
 
 /*=============================================================================
 * classes
@@ -133,13 +134,13 @@ VOID Trace(TRACE trc, VOID* v)
 
     for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl))
     {
-        if (!BBL_HasFallThrough(bbl))
+        if (!BBL_HasFallThrough(bbl)) // FIXME: should we really filter out jumps that do not have a fallthrough?
             continue;
         INS insTail = BBL_InsTail(bbl);
         if (!INS_IsDirectControlFlow(insTail))
             continue;
         ADDRINT tailAddress = INS_Address(insTail);
-        if (edgesMap.find(tailAddress) != edgesMap.end())
+        if (edgesMap.find(tailAddress) == edgesMap.end()) // edge not found. create it.
         {
             ADDRINT insFallThroughAddress = INS_NextAddress(insTail);
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
@@ -147,7 +148,7 @@ VOID Trace(TRACE trc, VOID* v)
             //ignore edges which connect different rtns
             RTN sourceRtn = RTN_FindByAddress(tailAddress);
             RTN targetRtn = RTN_FindByAddress(targetAddress);
-            if (RTN_Id(sourceRtn) != RTN_Id(targetRtn))
+            if (RTN_Id(sourceRtn) != RTN_Id(targetRtn)) // FIXME: maybe we also want to filter out recursions?
                 continue;
 
             Edge edge(tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
@@ -164,7 +165,7 @@ VOID Trace(TRACE trc, VOID* v)
         }
         else //edge found
         {
-            ;
+            ; // for now does nothing.
         }
         INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[tailAddress]), IARG_END);
     }
@@ -178,7 +179,7 @@ INT32 Usage()
     return -1;
 }
 
-VOID Fini(INT32 code, VOID* v)
+VOID FiniProf(INT32 code, VOID* v)
 {
     outFile << "source,destination,fallthrough,rtn address,taken count,not taken count,single source" << endl;
     findTargetEdges();
@@ -197,13 +198,13 @@ int main(int argc, char* argv[])
     {
         outFile.open("edge-count.csv");
         TRACE_AddInstrumentFunction(Trace, 0);
+
+        // Register FiniProf to be called when the application exits
+        PIN_AddFiniFunction(FiniProf, 0);
     }
 
     // Register Instruction function to be called to instrument ins
     //INS_AddInstrumentFunction(Instruction, 0);
-
-    // Register Fini to be called when the application exits
-    PIN_AddFiniFunction(Fini, 0);
 
     // Start the program, never returns
     PIN_StartProgram();
