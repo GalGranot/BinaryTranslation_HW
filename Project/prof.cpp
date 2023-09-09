@@ -57,18 +57,23 @@ KNOB<BOOL> KnobOpt(KNOB_MODE_WRITEONCE, "pintool", "opt", "0", "Enable optimizat
 class Edge
 {
 public:
-    ADDRINT source;
-    ADDRINT destination;
+    ADDRINT srcBBLHead;
+    ADDRINT source;         // also srcBBLTail
+    ADDRINT destination;    // also destBBLHead
+    // ADDRINT destBBLTail;
     ADDRINT fallThrough;
     ADDRINT rtnAddress;
     UINT64 takenCount;
     UINT64 notTakenCount;
     bool singleSource;
+    bool sharingTarget;
 
-    Edge() : source(0), destination(0), fallThrough(0), rtnAddress(0), takenCount(0), notTakenCount(0), singleSource(0) {}
+    Edge() : srcBBLHead(0), source(0), destination(0), fallThrough(0), rtnAddress(0), takenCount(0), notTakenCount(0), 
+    singleSource(true), sharingTarget(false) {}
 
-    Edge(ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : source(source), destination(destination),
-        fallThrough(fallThrough), rtnAddress(rtnAddress), takenCount(0), singleSource(true) {}
+    Edge(ADDRINT srcBBLHead, ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : 
+    srcBBLHead (srcBBLHead), source(source), destination(destination), fallThrough(fallThrough), rtnAddress(rtnAddress), 
+    takenCount(0), singleSource(true), sharingTarget(false) {}
 };
 
 /*=============================================================================
@@ -82,15 +87,34 @@ unordered_map<ADDRINT, Edge> edgesMap;
 =============================================================================*/
 void printEdge(const Edge& e)
 {
-    outFile << "0x" << hex << e.source << ","
+    outFile << hex
+        << "0x" << e.srcBBLHead << ","
+        << "0x" << e.source << ","
         << "0x" << e.destination << ","
         << "0x" << e.fallThrough << ","
-        << "0x" << e.rtnAddress << "," << dec
+        << "0x" << e.rtnAddress << "," 
+        << dec
         << e.takenCount << ","
-        << e.notTakenCount << "," << e.singleSource << endl;
+        << e.notTakenCount << "," 
+        << e.singleSource << "," 
+        << e.sharingTarget << endl;
 }
 
 bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
+
+void setSingleSource()
+{
+    for (const auto& pair : edgesMap)
+    {
+        const Edge& edge = pair.second;
+        // if target is in the map, and shared by more than one edge
+        if ( edgesMap.count(edge.destination) && edge.sharingTarget) 
+        {
+            edgesMap[edge.destination].singleSource = false; // because the target has more than 1 sources.
+        }
+    }
+    return;
+}
 
 /*FIXME vector<Edge>*/ void findTargetEdges()
 {
@@ -99,7 +123,7 @@ bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.
     for (const auto& pair : edgesMap)
     {
         Edge edge = pair.second;
-        if ((edge.takenCount > edge.notTakenCount))
+        // if ((edge.takenCount > edge.notTakenCount)) // commented out for debugging
             edgesByRtnMap[edge.rtnAddress].push_back(edge);
     }
     for (const auto& pair : edgesByRtnMap)
@@ -137,37 +161,49 @@ VOID Trace(TRACE trc, VOID* v)
         if (!BBL_HasFallThrough(bbl)) // FIXME: should we really filter out jumps that do not have a fallthrough?
             continue;
         INS insTail = BBL_InsTail(bbl);
-        if (!INS_IsDirectControlFlow(insTail))
+        INS insHead = BBL_InsHead(bbl);
+
+        if (!INS_IsDirectControlFlow(insTail)) // dont take into account because there is no branching, or target might not be constant.
             continue;
+        
         ADDRINT tailAddress = INS_Address(insTail);
-        if (edgesMap.find(tailAddress) == edgesMap.end()) // edge not found. create it.
+        ADDRINT headAddress = INS_Address(insHead);
+
+        if (edgesMap.find(headAddress) == edgesMap.end()) // edge not found. create it.
         {
             ADDRINT insFallThroughAddress = INS_NextAddress(insTail);
             ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
 
-            //ignore edges which connect different rtns
+            //ignore edges which connect different rtns. 
+            // this also ignores calls (?)
             RTN sourceRtn = RTN_FindByAddress(tailAddress);
             RTN targetRtn = RTN_FindByAddress(targetAddress);
             if (RTN_Id(sourceRtn) != RTN_Id(targetRtn)) // FIXME: maybe we also want to filter out recursions?
                 continue;
 
-            Edge edge(tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
-            for (const auto& pair : edgesMap)
+            Edge edge(headAddress, tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
+            for (auto& pair : edgesMap)
             {
-                Edge currEdge = pair.second;
-                if (currEdge.destination == targetAddress)
+                Edge& currEdge = pair.second;
+                if (currEdge.destination == targetAddress) // means that we saw another edge that arrives to the same bbl
                 {
-                    currEdge.singleSource = false;
-                    edge.singleSource = false;
+                    // if target is self, do not consider it as sharing.
+                    if (currEdge.destination != currEdge.srcBBLHead && targetAddress != headAddress)
+                    {
+                        currEdge.sharingTarget = true; // mark both edges which share the same target.
+                        edge.sharingTarget = true;
+                        // edgesMap[targetAddress].singleSource = false; // because the target has more than 1 sources.
+                    }
                 }
             }
-            edgesMap[tailAddress] = edge;
+            edgesMap[headAddress] = edge;
         }
         else //edge found
         {
             ; // for now does nothing.
         }
-        INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[tailAddress]), IARG_END);
+
+        INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[headAddress]), IARG_END);
     }
 }
 
@@ -181,8 +217,9 @@ INT32 Usage()
 
 VOID FiniProf(INT32 code, VOID* v)
 {
-    outFile << "source,destination,fallthrough,rtn address,taken count,not taken count,single source" << endl;
-    findTargetEdges();
+    outFile << "source bbl head,source,destination,fallthrough,rtn address,taken count,not taken count,single source, sharing target" << endl;
+    setSingleSource(); 
+    findTargetEdges(); 
 }
 
 /*=============================================================================
