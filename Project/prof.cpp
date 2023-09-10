@@ -118,7 +118,7 @@ void setSingleSource()
 
 /*FIXME vector<Edge>*/ void findTargetEdges()
 {
-    vector<Edge> result;
+    // vector<Edge> result;
     unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
     for (const auto& pair : edgesMap)
     {
