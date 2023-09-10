@@ -149,12 +149,17 @@ public:
 
 };
 
+#define THRESHOLD   1
+
 
 translated_rtn_t *translated_rtn;
 int translated_rtn_num = 0;
 
 ofstream outFile;
-unordered_map<ADDRINT, rtnData> rtnMap;
+ifstream chosenRtnFile;
+unordered_map<ADDRINT, rtnData> allRtnMap;
+
+unordered_map<ADDRINT, rtnData> chosenRtnMap;
 
 /* ============================================================= */
 /* Service dump routines                                         */
@@ -1086,14 +1091,19 @@ VOID ImageLoad(IMG img, VOID *v)
 }
 
 
-VOID printTargetCallees(UINT32 threshold)
+VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
 {
+    cerr<< "started printTargetCallees" << endl;
     // unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
-    for (const auto& pair : rtnMap)
+    for (const auto& pair : Map)
     {
-         const rtnData& callee = pair.second;
+        const rtnData& callee = pair.second;
+        if (callee.callNum < threshold) // if rtn wasn't called at all
+        {
+            continue;
+        }
         outFile << hex 
-                << "0x" << callee.rtnAddr << "," 
+                /*<< "0x" */<< callee.rtnAddr << "," 
                 << dec << callee.callNum << ",";
        
         for (const auto& caller2Num: callee.callers2callNumMap)
@@ -1102,7 +1112,7 @@ VOID printTargetCallees(UINT32 threshold)
             {
                 // print it
                 outFile << hex
-                        << "0x" << caller2Num.first << dec << " - " << caller2Num.second << ",";
+                        /*<< "0x" */<< caller2Num.first << dec << "-" << caller2Num.second << ",";
             }
         }
         outFile << endl;
@@ -1113,6 +1123,7 @@ VOID printTargetCallees(UINT32 threshold)
 VOID doCountRtn(ADDRINT callerAddr, VOID* address)
 {
     rtnData* rtnDataPtr = (rtnData*)address;
+    (rtnDataPtr->callNum)++;
     (rtnDataPtr->callers2callNumMap)[callerAddr]++;
 }
 
@@ -1130,10 +1141,15 @@ VOID ImageForProf(IMG img, VOID* v)
         if (!SEC_IsExecutable(sec) || SEC_IsWriteable(sec) || !SEC_Address(sec))
             continue;
 
+        // Start Gadi's code
+        // translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);            
+        // translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
+        // End Gadi's code
 
         for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
         {    
             RTN_Open(rtn); 
+            ADDRINT rtnAddr = RTN_Address(rtn);
             for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) 
             {
                 ADDRINT insAddr = INS_Address(ins);
@@ -1147,13 +1163,21 @@ VOID ImageForProf(IMG img, VOID* v)
                 {
                     continue;
                 }
-                
-                if (rtnMap.find(calleeAddr) == rtnMap.end()) // rtn not in map yet
+
+                if (RTN_Id(RTN_FindByAddress(calleeAddr)) == RTN_Id(RTN_FindByAddress(rtnAddr))) // this is a recursive call! avoid it at any cost!
                 {
-                    rtnMap[calleeAddr] = rtnData(calleeAddr); // add rtn to the map.
+                    cerr << "found recursive call! in routine " << RTN_Name(rtn) << " address " << rtnAddr << endl;
+                    cerr << "callee address " << calleeAddr << " caller address " << insAddr <<endl;
+                    continue;
                 }
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountRtn, IARG_ADDRINT, insAddr, IARG_PTR, &(rtnMap[calleeAddr]), IARG_END);
+                
+                if (allRtnMap.find(calleeAddr) == allRtnMap.end()) // rtn not in map yet
+                {
+                    allRtnMap[calleeAddr] = rtnData(calleeAddr); // add rtn to the map.
+                }
+                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountRtn, IARG_ADDRINT, insAddr, IARG_PTR, &(allRtnMap[calleeAddr]), IARG_END);
             }
+            
             // debug print of routine name:
             if (KnobVerbose) 
             {
@@ -1182,10 +1206,36 @@ INT32 Usage()
 
 VOID FiniProf(INT32 code, VOID* v)
 {
+    outFile.open("inline-count.csv");
     outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
-    printTargetCallees(0);
-    // setSingleSource(); 
-    // findTargetEdges(); 
+    printTargetCallees(THRESHOLD, allRtnMap);
+    
+    outFile.close();
+}
+
+
+// VOID FiniOpt(INT32 code, VOID* v)
+// {
+//     cerr << "start FiniOpt" << endl;
+//     chosenRtnFile.close();
+//     outFile.open("inline-out.csv");
+//     outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
+//     printTargetCallees(THRESHOLD, chosenRtnMap);
+//     outFile.close();
+//     return;
+// }
+
+vector<string> split(const string& s, char delim)
+{
+    vector<string> result;
+    stringstream ss (s);
+    string item;
+
+    while (getline (ss, item, delim)) {
+        result.push_back(item);
+    }
+
+    return result;
 }
 
 /* ===================================================================== */
@@ -1205,7 +1255,7 @@ int main(int argc, char * argv[])
 
     if (KnobProf)
     {
-        outFile.open("inline-count.csv");
+        
         IMG_AddInstrumentFunction(ImageForProf, 0);
 
         // Register FiniProf to be called when the application exits
@@ -1219,8 +1269,71 @@ int main(int argc, char * argv[])
 
     else if (KnobOpt)
     {
+        chosenRtnFile.open("inline-count.csv");
+		if (chosenRtnFile.fail())
+		{
+			cerr << endl << endl
+			<< "Something wrong with inline-count.csv. try running with \"-prof\" option first!"
+			<< endl << endl << endl;
+			return Usage();
+		}
 
-        IMG_AddInstrumentFunction(ImageLoad, 0);
+        string line;
+        std::getline(chosenRtnFile, line); // remove headlines
+
+        while(chosenRtnFile.good() && !chosenRtnFile.eof())
+        {
+            std::getline(chosenRtnFile, line);
+            
+            // const char* str = line.c_str();
+            // char* end;
+            // char* token = strtok(str, ",");
+
+            vector<string> in = split(line, ',');
+            if (in.size() == 0)
+            {
+                continue;
+            }
+            
+            vector<string>::iterator it = in.begin();
+            // cerr << "after init it. in is len "<< in.size() << " and line is len " << line.size() << "it is now: " << *it << endl;
+            ADDRINT calleeAddress = static_cast<ADDRINT>(stoul(*it, NULL, 16));
+            // cerr << "after get address" << endl;
+            it++;
+            UINT32 totalCallCount = stoul(*it, NULL, 10);
+            it++;
+            rtnData tempRtnData = rtnData(calleeAddress, totalCallCount);
+            
+            while(it != in.end()) // get callers info
+            {
+                // cerr << "in while" << endl;
+                // token = strtok(NULL, ",");
+                // ADDRINT callerAddress = static_cast<ADDRINT>(stoul(*(it++), &end, 16));
+                // UINT32 callCount = stoul(*(it++), NULL, 10);
+                vector<string> callerInfo = split(*it, '-');
+                it++;
+                ADDRINT callerAddress = static_cast<ADDRINT>(stoul(callerInfo[0], NULL, 16));
+                UINT32 callCount = stoul(callerInfo[1], NULL, 10);
+                tempRtnData.callers2callNumMap[callerAddress] = callCount;
+            }
+
+            
+			// cout << "RTN_address is " << address << " rtn name is " << RTN_FindNameByAddress(address) <<  endl;
+            chosenRtnMap[calleeAddress] = tempRtnData;
+        }
+
+
+        chosenRtnFile.close();
+        // outFile.open("inline-out.csv");
+        // outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
+        // printTargetCallees(THRESHOLD, chosenRtnMap);
+        // outFile.close();
+
+
+
+        //IMG_AddInstrumentFunction(ImageLoad, 0);
+        // PIN_AddFiniFunction(FiniOpt, 0);
+
         PIN_StartProgramProbed();
     }
 
