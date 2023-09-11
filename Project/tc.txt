@@ -1,0 +1,7 @@
+after memory allocation
+after identifying candidate routines
+after calculate direct br targets
+after fix instructions displacements
+after write all new instructions to memory tc
+0x402bdd: jmp qword ptr [rip+0x1941d]
+after commit translated routines

@@ -229,7 +229,7 @@ void dump_instr_from_mem (ADDRINT *address, ADDRINT new_addr)
  
   xed_format_context(XED_SYNTAX_INTEL, &new_xedd, disasm_buf, 2048, static_cast<UINT64>(new_addr), 0, 0);
 
-  cerr << "0x" << hex << new_addr << ": " << disasm_buf <<  endl;  
+  cout << "0x" << hex << new_addr << ": " << disasm_buf <<  endl;  
  
 }
 
@@ -305,7 +305,7 @@ void dump_tc()
  
       xed_format_context(XED_SYNTAX_INTEL, &new_xedd, disasm_buf, 2048, static_cast<UINT64>(address), 0, 0);
 
-      cerr << "0x" << hex << address << ": " << disasm_buf <<  endl;
+      cout << "0x" << hex << address << ": " << disasm_buf <<  endl;
 
       size = xed_decoded_inst_get_length (&new_xedd);    
   }
@@ -761,8 +761,10 @@ int fix_instructions_displacements()
 /*****************************************/
 int find_candidate_rtns_for_translation(IMG img)
 {
-    map<ADDRINT, xed_decoded_inst_t> local_instrs_map;
-    local_instrs_map.clear();
+    //map<ADDRINT, xed_decoded_inst_t> local_instrs_map;
+    vector<pair<ADDRINT, xed_decoded_inst_t>> localInsVector;
+    localInsVector.clear();
+    //local_instrs_map.clear();
 
     // go over routines and check if they are candidates for translation and mark them for translation:
 
@@ -802,7 +804,9 @@ int find_candidate_rtns_for_translation(IMG img)
             }
 
             // Save xed and addr into a map to be used later.
-            local_instrs_map[addr] = xedd;
+            pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
+            localInsVector.push_back(p);
+            //local_instrs_map[addr] = xedd;
             continue;
         }
         //curr ins is call to inline target
@@ -863,6 +867,8 @@ int find_candidate_rtns_for_translation(IMG img)
 
         for (INS insInline = RTN_InsHead(calleeRtn); INS_Valid(insInline); insInline = INS_Next(insInline))
         {
+            if (INS_IsRet(insInline))
+                continue;
             ADDRINT addr = INS_Address(insInline);
 
             //debug print of orig instruction:
@@ -885,7 +891,9 @@ int find_candidate_rtns_for_translation(IMG img)
             }
 
             // Save xed and addr into a map to be used later.
-            local_instrs_map[addr] = xedd;
+            pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
+            localInsVector.push_back(p);
+            //local_instrs_map[addr] = xedd;
         }
 
         RTN_Close(calleeRtn);
@@ -960,8 +968,11 @@ int find_candidate_rtns_for_translation(IMG img)
 
     // Go over the local_instrs_map map and add each instruction to the instr_map:
     int rtn_num = 0;
-    
-    for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
+
+    //for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
+    for (unsigned int i = 0; i < localInsVector.size(); i++)
+    {
+        pair<ADDRINT, xed_decoded_inst_t>* iter = &localInsVector[i];
        ADDRINT addr = iter->first;
        xed_decoded_inst_t xedd = iter->second;           
 
