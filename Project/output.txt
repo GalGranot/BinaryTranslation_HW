@@ -1,0 +1,11 @@
+after memory allocation
+after identifying candidate routines
+after calculate direct br targets
+after fix instructions displacements
+after write all new instructions to memory tc
+after memory allocation
+after identifying candidate routines
+after calculate direct br targets
+after fix instructions displacements
+after write all new instructions to memory tc
+after commit translated routines
