@@ -136,31 +136,56 @@ typedef struct {
 } translated_rtn_t;
 
 
-class rtnData
+class Edge
 {
 public:
-    ADDRINT rtnAddr;                                    // rtn's address
-    UINT32 callNum;                                     // global calling number. we might not need this.
-    UINT32 rtnInsNum;
-    unordered_map<ADDRINT, UINT32> callers2callNumMap;  // how many times each caller at address ADDRINT called this rtn.
-    
-    rtnData() : rtnAddr(0x555), callNum(0), rtnInsNum(0) {} // 0x555 for debugging purposes
-    rtnData(ADDRINT rtnAddr) : rtnAddr(rtnAddr), callNum(0), rtnInsNum(0) {}
-    rtnData(ADDRINT rtnAddr, UINT32 callNum) : rtnAddr(rtnAddr), callNum(callNum), rtnInsNum(0) {}
-    rtnData(ADDRINT rtnAddr, UINT32 callNum, UINT32 rtnInsNum) : rtnAddr(rtnAddr), callNum(callNum), rtnInsNum(rtnInsNum) {}
+    ADDRINT srcBBLHead;
+    ADDRINT source;         // also srcBBLTail
+    ADDRINT destination;    // also destBBLHead
+    // ADDRINT destBBLTail;
+    ADDRINT fallThrough;
+    ADDRINT rtnAddress;
+    UINT64 takenCount;
+    UINT64 notTakenCount;
+    bool singleSource;
+    bool sharingTarget;
+
+    Edge() : srcBBLHead(0), source(0), destination(0), fallThrough(0), rtnAddress(0), takenCount(0), notTakenCount(0), 
+    singleSource(true), sharingTarget(false) {}
+
+    Edge(ADDRINT srcBBLHead, ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress) : 
+    srcBBLHead (srcBBLHead), source(source), destination(destination), fallThrough(fallThrough), rtnAddress(rtnAddress), 
+    takenCount(0), notTakenCount(0), singleSource(true), sharingTarget(false) {}
+
+    Edge(ADDRINT srcBBLHead, ADDRINT source, ADDRINT destination, ADDRINT fallThrough, ADDRINT rtnAddress, 
+        UINT64 takenCount, UINT64 notTakenCount, bool singleSource, bool sharingTarget) : 
+    srcBBLHead (srcBBLHead), source(source), destination(destination), fallThrough(fallThrough), rtnAddress(rtnAddress), 
+    takenCount(takenCount), notTakenCount(notTakenCount), singleSource(singleSource), sharingTarget(sharingTarget) {}
+
+    Edge (vector<string> line)
+    {
+        this->srcBBLHead      = static_cast<ADDRINT>(stoul(line[0], NULL, 16)); 
+        this->source          = static_cast<ADDRINT>(stoul(line[1], NULL, 16)); 
+        this->destination     = static_cast<ADDRINT>(stoul(line[2], NULL, 16)); 
+        this->fallThrough     = static_cast<ADDRINT>(stoul(line[3], NULL, 16)); 
+        this->rtnAddress      = static_cast<ADDRINT>(stoul(line[4], NULL, 16)); 
+        this->takenCount      = static_cast<UINT64>(stoul(line[5], NULL, 10)); 
+        this->notTakenCount   = static_cast<UINT64>(stoul(line[6], NULL, 10)); 
+        this->singleSource    = static_cast<bool>(stoul(line[7], NULL, 10)); 
+        this->sharingTarget   = static_cast<bool>(stoul(line[8], NULL, 10));          
+    }
 };
 
-#define THRESHOLD   1
-
+vector<Edge> rtnReorderVector;
+ofstream outFile;
+ifstream chosenRtnFile;
+unordered_map<ADDRINT, Edge> edgesMap;
+unordered_map<ADDRINT, vector<Edge>> rtnReorderMap; // map of (rtnAddress, vector<Edges>)
 
 translated_rtn_t *translated_rtn;
 int translated_rtn_num = 0;
 
-ofstream outFile;
-ifstream chosenRtnFile;
-unordered_map<ADDRINT, rtnData> allRtnMap;
 
-unordered_map<ADDRINT, rtnData> chosenRtnMap;
 
 /* ============================================================= */
 /* Service dump routines                                         */
@@ -229,7 +254,7 @@ void dump_instr_from_mem (ADDRINT *address, ADDRINT new_addr)
  
   xed_format_context(XED_SYNTAX_INTEL, &new_xedd, disasm_buf, 2048, static_cast<UINT64>(new_addr), 0, 0);
 
-  cout << "0x" << hex << new_addr << ": " << disasm_buf <<  endl;  
+  cerr << "0x" << hex << new_addr << ": " << disasm_buf <<  endl;  
  
 }
 
@@ -305,7 +330,7 @@ void dump_tc()
  
       xed_format_context(XED_SYNTAX_INTEL, &new_xedd, disasm_buf, 2048, static_cast<UINT64>(address), 0, 0);
 
-      cout << "0x" << hex << address << ": " << disasm_buf <<  endl;
+      cerr << "0x" << hex << address << ": " << disasm_buf <<  endl;
 
       size = xed_decoded_inst_get_length (&new_xedd);    
   }
@@ -768,27 +793,50 @@ int find_candidate_rtns_for_translation(IMG img)
 
     // go over routines and check if they are candidates for translation and mark them for translation:
 
-    ADDRINT callerAddress = 0x402d92;
-    ADDRINT calleeAddress = 0x402b87;
+    //new code
 
-    RTN callerRtn = RTN_FindByAddress(callerAddress);
-    RTN calleeRtn = RTN_FindByAddress(calleeAddress);
+    //inline
+    //endof inline
 
-    RTN_Open(callerRtn);
-    translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(callerRtn);
-    translated_rtn[translated_rtn_num].rtn_size = RTN_Size(callerRtn);
-    for (INS ins = RTN_InsHead(callerRtn); INS_Valid(ins); ins = INS_Next(ins))
+    //reorder
+    ADDRINT wantedRtnAddress = 0x4016ce;
+    RTN rtn = RTN_FindByAddress(wantedRtnAddress);
+
+    if (RTN_Invaild(rtn))
+    [
+        return;
+    ]
+
+    vector<Edge> edgesVector = rtnReorderMap[wantedRtnAddress];
+
+    translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);            
+    translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
+
+    RTN_Open(rtn);
+
+    USIZE extraSize = 0;
+    for (int i = 0; i < edgesVector.size(); i++)
     {
-        if (INS_Address(ins) != callerAddress) // not the call operation
+        INS currIns = RTN_InsHead(rtn); 
+
+        Edge currEdge = edgesVector[i];
+
+        // find start of block
+        while (INS_Address(currIns) != currEdge.srcBBLHead) { currIns = INS_Next(currIns); }
+        INS bblIns = currIns;
+
+        // put block in local vector
+        for (bblIns = bblIns; INS_Address(bblIns) != currEdge.srcBBLTail ; bblIns = INS_Next(bblIns))
         {
-            ADDRINT addr = INS_Address(ins);
+            // put all xed instructions in cache (or some temp data structure)
+            ADDRINT addr = INS_Address(bblIns) ;
 
             //debug print of orig instruction:
             if (KnobVerbose) {
                 cerr << "from caller: "; //fixme remove
                 cerr << "old instr: ";
-                cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) << endl;
-                //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
+                cerr << "0x" << hex << addr << ": " << INS_Disassemble(bblIns) << endl;
+                //xed_print_hex_line(reinterpret_cast<UINT8*>(addr), INS_Size(bblIns));                               
             }
 
             xed_decoded_inst_t xedd;
@@ -807,75 +855,27 @@ int find_candidate_rtns_for_translation(IMG img)
             pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
             localInsVector.push_back(p);
             //local_instrs_map[addr] = xedd;
-            continue;
-        }
-        //curr ins is call to inline target
-        RTN_Close(callerRtn);
-        RTN_Open(calleeRtn);
-
-        //debug TC
-        /*
-        //debug TC
-        // Create an unconditional jump instruction:
-        cout << "begin debug TC" << endl;
-
-        ADDRINT addr2 = INS_Address(ins);
-        xed_decoded_inst_t xedd2;
-        xed_error_enum_t xed_code;
-
-        xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
-
-        cout << "1" << endl;
-        xed_code = xed_decode(&xedd2, reinterpret_cast<UINT8*>(addr2), max_inst_len);
-        if (xed_code != XED_ERROR_NONE) {
-            cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr2 << endl;
-            translated_rtn[translated_rtn_num].instr_map_entry = -1;
-            break;
-        }
-        cout << "2" << endl;
-        xed_encoder_instruction_t  enc_instr;
-        xed_inst1(&enc_instr, dstate,
-            XED_ICLASS_JMP, 64,
-            xed_relbr(0x1234567, 32));
-
-        cout << "3" << endl;
-        xed_encoder_request_t enc_req;
-        xed_encoder_request_zero_set_mode(&enc_req, &dstate);
-        xed_bool_t convert_ok = xed_convert_to_encoder_request(&enc_req, &enc_instr);
-        if (!convert_ok) {
-            cerr << "conversion to encode request failed" << endl;
-            return -1;
         }
 
-        cout << "4" << endl;
-        //unsigned int ilen = XED_MAX_INSTRUCTION_BYTES;
-        //unsigned int olen = 0;
-        //xed_error_enum_t xed_error = xed_encode(&enc_req,
-        //    reinterpret_cast<UINT8*>(instr_map[num_of_instr_map_entries - 1].encoded_ins), ilen, &olen);
-        //cout << "5" << endl;
-        //if (xed_error != XED_ERROR_NONE) {
-        //    cerr << "ENCODE ERROR: " << xed_error_enum_t2str(xed_error) << endl;
-        //    return -1;
-        //}
-        cout << "6" << endl;
-        local_instrs_map[addr2 + 1] = xedd2;
-
-        cout << "endof debug TC" << endl;
-        //endof debug TC
-
-        */
-
-        for (INS insInline = RTN_InsHead(calleeRtn); INS_Valid(insInline); insInline = INS_Next(insInline))
+        // handle last ins!!
+        if (INS_IsBranch(bblIns))
         {
-            if (INS_IsRet(insInline))
-                continue;
-            ADDRINT addr = INS_Address(insInline);
+            // change jump to next block if needed.
+            // revert condition if needed.
+            // add to localInsVector
+        }
+
+        else 
+        {
+            // add bblIns
+            ADDRINT addr = INS_Address(bblIns);
 
             //debug print of orig instruction:
             if (KnobVerbose) {
+                cerr << "from caller: "; //fixme remove
                 cerr << "old instr: ";
-                cerr << "0x" << hex << INS_Address(insInline) << ": " << INS_Disassemble(insInline) << endl;
-                //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
+                cerr << "0x" << hex << addr << ": " << INS_Disassemble(bblIns) << endl;
+                //xed_print_hex_line(reinterpret_cast<UINT8*>(addr), INS_Size(bblIns));                               
             }
 
             xed_decoded_inst_t xedd;
@@ -893,86 +893,143 @@ int find_candidate_rtns_for_translation(IMG img)
             // Save xed and addr into a map to be used later.
             pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
             localInsVector.push_back(p);
-            //local_instrs_map[addr] = xedd;
+            
+
+            // FIXME: add *new* unconditional jump to next address INS_NextAddress(bblIns) (start of next block) !!!!!!!!!!!!!!!!!!
+
+            // create a direct uncond jump to the same address:
+            ADDRINT addr2 = INS_Address(ins);
+            xed_decoded_inst_t xedd2;
+            xed_error_enum_t xed_code;
+
+
+
+            xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
+            xed_uint8_t enc_buf2[XED_MAX_INSTRUCTION_BYTES];		
+            // xed_int32_t disp = xed_decoded_inst_get_branch_displacement(xedd);
+            xed_encoder_instruction_t  enc_instr;
+
+            xed_inst1(&enc_instr, dstate, 
+                    XED_ICLASS_JMP, 64,
+                    xed_relbr(INS_NextAddress(bblIns), 32)); // create the branch command. relative to current address.
+                                    
+            xed_encoder_request_t enc_req;
+
+            xed_encoder_request_zero_set_mode(&enc_req, &dstate);
+            xed_bool_t convert_ok = xed_convert_to_encoder_request(&enc_req, &enc_instr);
+            if (!convert_ok) {
+                cerr << "conversion to encode request failed" << endl;
+                continue;
+            }
+
+            xed_error = xed_encode (&enc_req, enc_buf2, max_size, &new_size);
+            if (xed_error != XED_ERROR_NONE) {
+                cerr << "ENCODE ERROR: " << xed_error_enum_t2str(xed_error) << endl;				
+                continue;
+            }		
+
+
+            // create a decoded xed object to be added to localInsVector
+            xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
+            xed_code = xed_decode(&xedd2, enc_buf2, max_inst_len);
+            if (xed_code != XED_ERROR_NONE) {
+                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+                translated_rtn[translated_rtn_num].instr_map_entry = -1;
+                break;
+            }
+
+            // Save xed and addr into a map to be used later.
+            pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd2); 
+            localInsVector.push_back(p);
         }
 
-        RTN_Close(calleeRtn);
-        RTN_Open(callerRtn);
+
+
+        // currIns = INS_Next(currIns);
     }
-    RTN_Close(callerRtn);
-    translated_rtn_num++;
-
-    //gadi code
-    /*
-    //for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    //{   
-    //    if (!SEC_IsExecutable(sec) || SEC_IsWriteable(sec) || !SEC_Address(sec))
-    //        continue;
-
-    //    for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-    //    {    
-
-    //        if (rtn == RTN_Invalid()) {
-    //          cerr << "Warning: invalid routine " << RTN_Name(rtn) << endl;
-    //            continue;
-    //        }
-
-    //        translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);            
-    //        translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
-
-    //        // Open the RTN.
-    //        RTN_Open( rtn ); 
-    //        
-    //        for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
-    //            
-    //            ADDRINT addr = INS_Address(ins);
-    //            
-    //            //debug print of orig instruction:
-    //            if (KnobVerbose) {
-    //                cerr << "old instr: ";
-    //                cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) <<  endl;
-    //                //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
-    //            }        
-    //            
-    //            xed_decoded_inst_t xedd;
-    //            xed_error_enum_t xed_code;                            
-    //            
-    //            xed_decoded_inst_zero_set_mode(&xedd,&dstate); 
-
-    //            xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
-    //            if (xed_code != XED_ERROR_NONE) {
-    //                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
-    //                translated_rtn[translated_rtn_num].instr_map_entry = -1;
-    //                break;
-    //            }
-    //            
-    //            // Save xed and addr into a map to be used later.
-    //            local_instrs_map[addr] = xedd;
-    //            
-    //        } // end for INS...
 
 
-    //        // debug print of routine name:
-    //        if (KnobVerbose) {
-    //            cerr <<   "rtn name: " << RTN_Name(rtn) << " : " << dec << translated_rtn_num << endl;
-    //        }            
 
-    //        // Close the RTN.
-    //        RTN_Close( rtn );
+    RTN_Close(rtn);
 
-    //        translated_rtn_num++;
+    // put all xeds in a data structure, separated by bbls.
+        // data structure should contain the bbl's size in bytes (so we can fix the jumps)
+        // should contain a list of the xeds by original order.
+    // after arranging, 
 
-    //     } // end for RTN..
-    //} // end for SEC...
-    */
+    // for (Edge edge : rtnReorderVector)
+    // {
+    //     RTN rtn = RTN_FindByAddress(edge.rtnAddress);
+    //     if (rtn == RTN_Invalid())
+    //     {
+    //         cerr << "Warning: invalid routine " << endl;
+    //         continue;
+    //     }
+    //     translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);            
+    //     translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
+    //     RTN_Open(rtn);
+
+    //     for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
+    //     {
+    //         ADDRINT addr = INS_Address(ins);
+    //         if (INS_IsControlFlow(ins))
+    //         {
+    //             if (0/*compare to targeted instructions of rtn*/)
+    //             {
+    //                     ;
+    //             }
+    //         }
+            
+    //         //debug print of orig instruction:
+    //         if (KnobVerbose)
+    //         {
+    //             cerr << "old instr: ";
+    //             cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) << endl;
+    //             //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));
+    //         }
+
+    //         //don't touch
+    //         xed_decoded_inst_t xedd;
+    //         xed_error_enum_t xed_code;
+
+    //         xed_decoded_inst_zero_set_mode(&xedd, &dstate);
+
+    //         xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
+    //         if (xed_code != XED_ERROR_NONE) {
+    //             cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+    //             translated_rtn[translated_rtn_num].instr_map_entry = -1;
+    //             break;
+    //         }
+    //         // Save xed and addr into a map to be used later.
+    //         pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
+    //         localInsVector.push_back(p);
+    //         //local_instrs_map[addr] = xedd;
+    //         //endof don't touch
+    //     } //endof ins
+        
+    //       // debug print of routine name:
+    //     if (KnobVerbose)
+    //     {
+    //         cerr <<   "rtn name: " << RTN_Name(rtn) << " : " << dec << translated_rtn_num << endl;
+    //     }
+
+    //     RTN_Close(rtn);
+    //     translated_rtn_num++;
+    // } //endof rtnReorderVector
+    // //endof reoreder
+
+
+    //endof new code
+
 
     // Go over the local_instrs_map map and add each instruction to the instr_map:
     int rtn_num = 0;
-
+    
     //for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
     for (unsigned int i = 0; i < localInsVector.size(); i++)
     {
         pair<ADDRINT, xed_decoded_inst_t>* iter = &localInsVector[i];
+    
        ADDRINT addr = iter->first;
        xed_decoded_inst_t xedd = iter->second;           
 
@@ -1233,107 +1290,6 @@ VOID ImageLoad(IMG img, VOID *v)
 }
 
 
-VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
-{
-    cerr<< "started printTargetCallees" << endl;
-    // unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
-    for (const auto& pair : Map)
-    {
-        const rtnData& callee = pair.second;
-        if (callee.callNum < threshold) // if rtn wasn't called at all
-        {
-            continue;
-        }
-        outFile << hex 
-                /*<< "0x" */<< callee.rtnAddr << "," 
-                << dec << callee.rtnInsNum << "," << callee.callNum << ",";
-       
-        for (const auto& caller2Num: callee.callers2callNumMap)
-        {
-            if (caller2Num.second >= threshold)
-            {
-                // print it
-                outFile << hex
-                        /*<< "0x" */<< caller2Num.first << dec << "-" << caller2Num.second << ",";
-            }
-        }
-        outFile << endl;
-    }
-}
-
-
-VOID doCountRtn(ADDRINT callerAddr, VOID* address)
-{
-    rtnData* rtnDataPtr = (rtnData*)address;
-    (rtnDataPtr->callNum)++;
-    (rtnDataPtr->callers2callNumMap)[callerAddr]++;
-}
-
-
-VOID ImageForProf(IMG img, VOID* v)
-{
-    
-    if (!IMG_Valid(img) || !IMG_IsMainExecutable(img))
-    {
-        return;
-    }
-    
-    for (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))
-    {   
-        if (!SEC_IsExecutable(sec) || SEC_IsWriteable(sec) || !SEC_Address(sec))
-            continue;
-
-        // Start Gadi's code
-        // translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(rtn);            
-        // translated_rtn[translated_rtn_num].rtn_size = RTN_Size(rtn);
-        // End Gadi's code
-
-        for (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))
-        {    
-            RTN_Open(rtn);
-            UINT32 rtnSize = RTN_Size(rtn);
-            ADDRINT rtnAddr = RTN_Address(rtn);
-            for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) 
-            {
-                ADDRINT insAddr = INS_Address(ins);
-                
-                if (!(INS_IsDirectCall(ins))) // take only direct calls
-                {
-                    continue;
-                }
-                ADDRINT calleeAddr = INS_DirectControlFlowTargetAddress(ins);
-                if (!(IMG_IsMainExecutable(IMG_FindByAddress(calleeAddr)))) // take only if calling to a rtn in main executable
-                {
-                    continue;
-                }
-
-                if (RTN_Id(RTN_FindByAddress(calleeAddr)) == RTN_Id(RTN_FindByAddress(rtnAddr))) // this is a recursive call! avoid it at any cost!
-                {
-                    cerr << "found recursive call! in routine " << RTN_Name(rtn) << " address " << rtnAddr << endl;
-                    cerr << "callee address " << calleeAddr << " caller address " << insAddr <<endl;
-                    continue;
-                }
-                
-                if (allRtnMap.find(calleeAddr) == allRtnMap.end()) // rtn not in map yet
-                {
-                    allRtnMap[calleeAddr] = rtnData(calleeAddr, 0, rtnSize); // add rtn to the map.
-                }
-                INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountRtn, IARG_ADDRINT, insAddr, IARG_PTR, &(allRtnMap[calleeAddr]), IARG_END);
-            }
-            
-            // debug print of routine name:
-            if (KnobVerbose) 
-            {
-                cerr <<   "rtn name: " << RTN_Name(rtn) << " : " << dec << translated_rtn_num << endl;
-            }   
-
-            RTN_Close(rtn);
-
-        }
-    }
-    return;
-}
-
 
 /* ===================================================================== */
 /* Print Help Message                                                    */
@@ -1347,26 +1303,21 @@ INT32 Usage()
     return -1;
 }
 
-VOID FiniProf(INT32 code, VOID* v)
+
+void printEdge(const Edge& e)
 {
-    outFile.open("inline-count.csv");
-    outFile << "rtn address,rtn size,total num of calls,num of calls for each caller" << endl;
-    printTargetCallees(THRESHOLD, allRtnMap);
-    
-    outFile.close();
+    outFile << hex
+        /*<< "0x"*/ << e.srcBBLHead << ","
+        /*<< "0x"*/ << e.source << ","
+        /*<< "0x"*/ << e.destination << ","
+        /*<< "0x"*/ << e.fallThrough << ","
+        /*<< "0x"*/ << e.rtnAddress << "," 
+        << dec
+        << e.takenCount << ","
+        << e.notTakenCount << "," 
+        << e.singleSource << "," 
+        << e.sharingTarget << endl;
 }
-
-
-// VOID FiniOpt(INT32 code, VOID* v)
-// {
-//     cerr << "start FiniOpt" << endl;
-//     chosenRtnFile.close();
-//     outFile.open("inline-out.csv");
-//     outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
-//     printTargetCallees(THRESHOLD, chosenRtnMap);
-//     outFile.close();
-//     return;
-// }
 
 vector<string> split(const string& s, char delim)
 {
@@ -1380,6 +1331,122 @@ vector<string> split(const string& s, char delim)
 
     return result;
 }
+
+
+VOID doCountEdge(INT32 taken, VOID* address)
+{
+    Edge* edgePtr = (Edge*)address;
+    if (taken)
+        (*edgePtr).takenCount++;
+    else
+        (*edgePtr).notTakenCount++;
+}
+
+
+VOID Trace(TRACE trc, VOID* v)
+{
+    IMG img = IMG_FindByAddress(TRACE_Address(trc));
+    if (!IMG_Valid(img) || !IMG_IsMainExecutable(img))
+        return;
+
+    for (BBL bbl = TRACE_BblHead(trc); BBL_Valid(bbl); bbl = BBL_Next(bbl))
+    {
+        if (!BBL_HasFallThrough(bbl)) // FIXME: should we really filter out jumps that do not have a fallthrough?
+            continue;
+        INS insTail = BBL_InsTail(bbl);
+        INS insHead = BBL_InsHead(bbl);
+
+        if (!INS_IsDirectControlFlow(insTail)) // dont take into account because there is no branching, or target might not be constant.
+            continue;
+        
+        ADDRINT tailAddress = INS_Address(insTail);
+        ADDRINT headAddress = INS_Address(insHead);
+
+        if (edgesMap.find(headAddress) == edgesMap.end()) // edge not found. create it.
+        {
+            ADDRINT insFallThroughAddress = INS_NextAddress(insTail);
+            ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(insTail);
+
+            //ignore edges which connect different rtns. 
+            // this also ignores calls (?)
+            RTN sourceRtn = RTN_FindByAddress(tailAddress);
+            RTN targetRtn = RTN_FindByAddress(targetAddress);
+            if (RTN_Id(sourceRtn) != RTN_Id(targetRtn)) // FIXME: maybe we also want to filter out recursions?
+                continue;
+
+            Edge edge(headAddress, tailAddress, targetAddress, insFallThroughAddress, RTN_Address(INS_Rtn(insTail)));
+            for (auto& pair : edgesMap)
+            {
+                Edge& currEdge = pair.second;
+                if (currEdge.destination == targetAddress) // means that we saw another edge that arrives to the same bbl
+                {
+                    // if target is self, do not consider it as sharing.
+                    if (currEdge.destination != currEdge.srcBBLHead && targetAddress != headAddress)
+                    {
+                        currEdge.sharingTarget = true; // mark both edges which share the same target.
+                        edge.sharingTarget = true;
+                        // edgesMap[targetAddress].singleSource = false; // because the target has more than 1 sources.
+                    }
+                }
+            }
+            edgesMap[headAddress] = edge;
+        }
+        else //edge found
+        {
+            ; // for now does nothing.
+        }
+
+        INS_InsertCall(insTail, IPOINT_BEFORE, (AFUNPTR)doCountEdge, IARG_BRANCH_TAKEN, IARG_PTR, &(edgesMap[headAddress]), IARG_END);
+    }
+}
+
+bool compareEdgePtr(const Edge& e1, const Edge& e2) { return e1.takenCount > e2.takenCount; }
+
+
+void setSingleSource()
+{
+    for (const auto& pair : edgesMap)
+    {
+        const Edge& edge = pair.second;
+        // if target is in the map, and shared by more than one edge
+        if ( edgesMap.count(edge.destination) && edge.sharingTarget) 
+        {
+            edgesMap[edge.destination].singleSource = false; // because the target has more than 1 sources.
+        }
+    }
+    return;
+}
+
+
+/*FIXME vector<Edge>*/ void findTargetEdges()
+{
+    // vector<Edge> result;
+    unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
+    for (const auto& pair : edgesMap)
+    {
+        Edge edge = pair.second;
+        // if ((edge.takenCount > edge.notTakenCount)) // commented out for debugging
+            edgesByRtnMap[edge.rtnAddress].push_back(edge);
+    }
+    for (const auto& pair : edgesByRtnMap)
+    {
+        vector<Edge> rtnEdges = pair.second;
+        if (rtnEdges.empty())
+            continue;
+        std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
+        for (const auto& e : rtnEdges)
+            printEdge(e);
+    }
+}
+
+
+VOID FiniProf(INT32 code, VOID* v)
+{
+    outFile << "source bbl head,source,destination,fallthrough,rtn address,taken count,not taken count,single source, sharing target" << endl;
+    setSingleSource(); 
+    findTargetEdges(); 
+}
+
 
 /* ===================================================================== */
 /* Main                                                                  */
@@ -1398,11 +1465,12 @@ int main(int argc, char * argv[])
 
     if (KnobProf)
     {
-        
-        IMG_AddInstrumentFunction(ImageForProf, 0);
+        outFile.open("edge-count.csv");
+        TRACE_AddInstrumentFunction(Trace, 0);
 
         // Register FiniProf to be called when the application exits
         PIN_AddFiniFunction(FiniProf, 0);
+    
 
         // Start the program, never returns
         PIN_StartProgram();
@@ -1412,7 +1480,7 @@ int main(int argc, char * argv[])
 
     else if (KnobOpt)
     {
-        chosenRtnFile.open("inline-count.csv");
+        chosenRtnFile.open("edge-count.csv");
 		if (chosenRtnFile.fail())
 		{
 			cerr << endl << endl
@@ -1424,70 +1492,49 @@ int main(int argc, char * argv[])
         string line;
         std::getline(chosenRtnFile, line); // remove headlines
 
-        //FIXME remove comment
-   //     while(chosenRtnFile.good() && !chosenRtnFile.eof())
-   //     {
-   //         std::getline(chosenRtnFile, line);
-   //         
-   //         // const char* str = line.c_str();
-   //         // char* end;
-   //         // char* token = strtok(str, ",");
+        // parse lines
+        while (chosenRtnFile.good() && !chosenRtnFile.eof())
+        {
+            std::getline(chosenRtnFile, line);
+            vector<string> in = split(line, ',');
+            if (in.size() == 0) // if reached an empty line, pass
+            {
+                continue;
+            }
 
-   //         vector<string> in = split(line, ',');
-   //         if (in.size() == 0)
-   //         {
-   //             continue;
-   //         }
-   //         
-   //         vector<string>::iterator it = in.begin();
-   //         // cerr << "after init it. in is len "<< in.size() << " and line is len " << line.size() << "it is now: " << *it << endl;
-   //         ADDRINT calleeAddress = static_cast<ADDRINT>(stoul(*it, NULL, 16));
-   //         // cerr << "after get address" << endl;
-   //         it++;
-   //         UINT32 totalCallCount = stoul(*it, NULL, 10);
-   //         it++;
-   //         rtnData tempRtnData = rtnData(calleeAddress, totalCallCount);
-   //         
-   //         while(it != in.end()) // get callers info
-   //         {
-   //             // cerr << "in while" << endl;
-   //             // token = strtok(NULL, ",");
-   //             // ADDRINT callerAddress = static_cast<ADDRINT>(stoul(*(it++), &end, 16));
-   //             // UINT32 callCount = stoul(*(it++), NULL, 10);
-   //             vector<string> callerInfo = split(*it, '-');
-   //             it++;
-   //             ADDRINT callerAddress = static_cast<ADDRINT>(stoul(callerInfo[0], NULL, 16));
-   //             UINT32 callCount = stoul(callerInfo[1], NULL, 10);
-   //             tempRtnData.callers2callNumMap[callerAddress] = callCount;
-   //         }
+            Edge tempEdge = Edge(in);
+            
+            rtnReorderMap[tempEdge.rtnAddress].push_back(tempEdge);
 
-   //         
-			//// cout << "RTN_address is " << address << " rtn name is " << RTN_FindNameByAddress(address) <<  endl;
-   //         chosenRtnMap[calleeAddress] = tempRtnData;
-   //     }
-
+        }
 
         chosenRtnFile.close();
-        // outFile.open("inline-out.csv");
-        // outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
-        // printTargetCallees(THRESHOLD, chosenRtnMap);
-        // outFile.close();
+        outFile.open("reorder-out.csv");
+        outFile << "source bbl head,source,destination,fallthrough,rtn address,taken count,not taken count,single source, sharing target" << endl;
+        for (const auto& pair : rtnReorderMap)
+        {
+           vector<Edge> rtnEdges = pair.second;
+            if (rtnEdges.empty())
+                continue;
+            
+            std::sort(rtnEdges.begin(), rtnEdges.end(), compareEdgePtr);
+            for (const auto& e : rtnEdges)
+                printEdge(e);
+        }
+        outFile.close();
 
 
-
-        IMG_AddInstrumentFunction(ImageLoad, 0);
+        // IMG_AddInstrumentFunction(ImageLoad, 0);
         // PIN_AddFiniFunction(FiniOpt, 0);
-
+        // Start the program, never returns
         PIN_StartProgramProbed();
     }
 
-    // Start the program, never returns
-    
 
+    
     return 0;
 }
 
 /* ===================================================================== */
 /* eof */
 /* ===================================================================== */
-
