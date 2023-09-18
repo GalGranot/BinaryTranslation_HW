@@ -27,14 +27,14 @@ TEST_TOOL_ROOTS := dcache edgcnt pinatrace trace icount inscount2_mt opcodemix m
                    oper-imm bsr_bsf inscount_and_check_tls
 
 # This defines the tests to be run that were not already defined in TEST_TOOL_ROOTS.
-TEST_ROOTS := prof inline reorder 
+TEST_ROOTS := prof inline reorder new_reorder 
 
 # This defines the tools which will be run during the the tests, and were not already defined in
 # TEST_TOOL_ROOTS.
-TOOL_ROOTS := prof inline reorder 
+TOOL_ROOTS := prof inline reorder new_reorder 
 
 # This defines all the applications that will be run during the tests.
-APP_ROOTS := get_source_app regval_app oper_imm_app bsr_bsf_app prof inline reorder 
+APP_ROOTS := get_source_app regval_app oper_imm_app bsr_bsf_app prof inline reorder new_reorder 
 
 # This defines any additional object files that need to be compiled.
 OBJECT_ROOTS := oper_imm_asm bsr_bsf_asm
