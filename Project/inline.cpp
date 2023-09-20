@@ -765,12 +765,27 @@ bool canInlineCallee(ADDRINT calleeAddress)
     if (!RTN_Valid(rtn))
         return false;
     RTN_Open(rtn);
-    if (!INS_IsRet(RTN_InsTail(rtn)))
+    if (!INS_IsRet(RTN_InsTail(rtn)) || calleeAddress != INS_Address(RTN_InsHead(rtn)))
     {
+        cout << "Not inlining 0x" << calleeAddress << endl;
         RTN_Close(rtn);
         return false;
     }
-    RTN_Close(rtn);//
+    int retCount = 0;
+    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
+    {
+        if (INS_IsRet(ins))
+            retCount++;
+        //bool invalid = (retCount > 1) /* || (INS_IsIndirectControlFlow(ins)) */;
+        if( (retCount > 1) /*|| (INS_IsIndirectControlFlow(ins)) */)
+        {
+            cout << "Not inlining 0x" << calleeAddress << endl;
+            RTN_Close(rtn);
+            return false;
+        }
+    }
+
+    RTN_Close(rtn);
     return true;
 }
     
@@ -831,6 +846,7 @@ int find_candidate_rtns_for_translation(IMG img)
         if (!canInlineCallee(calleeAddress))
             continue;
         ADDRINT callerAddress = p.second;
+        cout << "Inlining 0x" << calleeAddress << endl;
 
         RTN calleeRtn = RTN_FindByAddress(calleeAddress);
         RTN callerRtn = RTN_FindByAddress(callerAddress);
