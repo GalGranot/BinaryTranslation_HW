@@ -41,6 +41,9 @@ END_LEGAL */
  * and patches the orginal code to jump to the translated routines.
  */
 
+#define ERROR 1
+#define SUCCESS 0
+
 #include "pin.H"
 extern "C" {
 #include "xed-interface.h"
@@ -150,7 +153,7 @@ public:
     rtnData(ADDRINT rtnAddr, UINT32 callNum, UINT32 rtnInsNum) : rtnAddr(rtnAddr), callNum(callNum), rtnInsNum(rtnInsNum) {}
 };
 
-#define THRESHOLD   1
+#define THRESHOLD   500
 
 
 translated_rtn_t *translated_rtn;
@@ -161,6 +164,8 @@ ifstream chosenRtnFile;
 unordered_map<ADDRINT, rtnData> allRtnMap;
 
 unordered_map<ADDRINT, rtnData> chosenRtnMap;
+
+vector<pair<ADDRINT, ADDRINT>> calleeCallers;
 
 /* ============================================================= */
 /* Service dump routines                                         */
@@ -768,139 +773,182 @@ int find_candidate_rtns_for_translation(IMG img)
 
     // go over routines and check if they are candidates for translation and mark them for translation:
 
-    ADDRINT callerAddress = 0x402d92;
-    ADDRINT calleeAddress = 0x402b87;
-
-    RTN callerRtn = RTN_FindByAddress(callerAddress);
-    RTN calleeRtn = RTN_FindByAddress(calleeAddress);
-
-    RTN_Open(callerRtn);
-    translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(callerRtn);
-    translated_rtn[translated_rtn_num].rtn_size = RTN_Size(callerRtn);
-    for (INS ins = RTN_InsHead(callerRtn); INS_Valid(ins); ins = INS_Next(ins))
+    unsigned int i = 0;
+    while(i < 3)
     {
-        if (INS_Address(ins) != callerAddress) // not the call operation
+
+        ADDRINT calleeAddress;;
+        ADDRINT callerAddress;
+        if (i == 0) 
         {
-            ADDRINT addr = INS_Address(ins);
-
-            //debug print of orig instruction:
-            if (KnobVerbose) {
-                cerr << "from caller: "; //fixme remove
-                cerr << "old instr: ";
-                cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) << endl;
-                //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
-            }
-
-            xed_decoded_inst_t xedd;
-            xed_error_enum_t xed_code;
-
-            xed_decoded_inst_zero_set_mode(&xedd, &dstate);
-
-            xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
-            if (xed_code != XED_ERROR_NONE) {
-                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
-                translated_rtn[translated_rtn_num].instr_map_entry = -1;
-                break;
-            }
-
-            // Save xed and addr into a map to be used later.
-            pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
-            localInsVector.push_back(p);
-            //local_instrs_map[addr] = xedd;
-            continue;
+            calleeAddress = 0x408422;
+            callerAddress = 0x408960;
         }
-        //curr ins is call to inline target
-        RTN_Close(callerRtn);
-        RTN_Open(calleeRtn);
-
-        //debug TC
-        /*
-        //debug TC
-        // Create an unconditional jump instruction:
-        cout << "begin debug TC" << endl;
-
-        ADDRINT addr2 = INS_Address(ins);
-        xed_decoded_inst_t xedd2;
-        xed_error_enum_t xed_code;
-
-        xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
-
-        cout << "1" << endl;
-        xed_code = xed_decode(&xedd2, reinterpret_cast<UINT8*>(addr2), max_inst_len);
-        if (xed_code != XED_ERROR_NONE) {
-            cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr2 << endl;
-            translated_rtn[translated_rtn_num].instr_map_entry = -1;
-            break;
+        if (i == 1)
+        {
+            calleeAddress = 0x402b87;
+            callerAddress = 0x402d92;
         }
-        cout << "2" << endl;
-        xed_encoder_instruction_t  enc_instr;
-        xed_inst1(&enc_instr, dstate,
-            XED_ICLASS_JMP, 64,
-            xed_relbr(0x1234567, 32));
-
-        cout << "3" << endl;
-        xed_encoder_request_t enc_req;
-        xed_encoder_request_zero_set_mode(&enc_req, &dstate);
-        xed_bool_t convert_ok = xed_convert_to_encoder_request(&enc_req, &enc_instr);
-        if (!convert_ok) {
-            cerr << "conversion to encode request failed" << endl;
-            return -1;
-        }
-
-        cout << "4" << endl;
-        //unsigned int ilen = XED_MAX_INSTRUCTION_BYTES;
-        //unsigned int olen = 0;
-        //xed_error_enum_t xed_error = xed_encode(&enc_req,
-        //    reinterpret_cast<UINT8*>(instr_map[num_of_instr_map_entries - 1].encoded_ins), ilen, &olen);
-        //cout << "5" << endl;
-        //if (xed_error != XED_ERROR_NONE) {
-        //    cerr << "ENCODE ERROR: " << xed_error_enum_t2str(xed_error) << endl;
-        //    return -1;
+        //if (i == 2)
+        //{
+        //    calleeAddress = 0x400dc0;
+        //    callerAddress = 0x404834;
         //}
-        cout << "6" << endl;
-        local_instrs_map[addr2 + 1] = xedd2;
-
-        cout << "endof debug TC" << endl;
-        //endof debug TC
-
-        */
-
-        for (INS insInline = RTN_InsHead(calleeRtn); INS_Valid(insInline); insInline = INS_Next(insInline))
+        if (i == 2)
         {
-            if (INS_IsRet(insInline))
+            calleeAddress = 0x4046c7;
+            callerAddress = 0x4047bf;
+        }
+        //if (i == 3)
+        //{
+        //    calleeAddress = 0x40abbf;
+        //    callerAddress = 0x404872;
+        //}
+        //if (i == 5)
+        //{
+        //    calleeAddress = 0x400ed0;
+        //    callerAddress = 0x4046fb;
+        //}
+        i++;
+        //pair<ADDRINT, ADDRINT> p = calleeCallers[i];
+        //ADDRINT calleeAddress = p.first;
+        //ADDRINT callerAddress = p.second;
+        //cout << "starting rtn. callee address: 0x" << calleeAddress << ", caller address: 0x" << callerAddress << endl;
+
+
+        RTN callerRtn = RTN_FindByAddress(callerAddress);
+        RTN calleeRtn = RTN_FindByAddress(calleeAddress);
+
+        RTN_Open(callerRtn);
+        translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(callerRtn);
+        translated_rtn[translated_rtn_num].rtn_size = RTN_Size(callerRtn);
+        for (INS ins = RTN_InsHead(callerRtn); INS_Valid(ins); ins = INS_Next(ins))
+        {
+            if (INS_Address(ins) != callerAddress) // not the call operation
+            {
+                ADDRINT addr = INS_Address(ins);
+
+                //debug print of orig instruction:
+                if (KnobVerbose) {
+                    cerr << "from caller: "; //fixme remove
+                    cerr << "old instr: ";
+                    cerr << "0x" << hex << INS_Address(ins) << ": " << INS_Disassemble(ins) << endl;
+                    //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
+                }
+
+                xed_decoded_inst_t xedd;
+                xed_error_enum_t xed_code;
+
+                xed_decoded_inst_zero_set_mode(&xedd, &dstate);
+
+                xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
+                if (xed_code != XED_ERROR_NONE) {
+                    cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+                    translated_rtn[translated_rtn_num].instr_map_entry = -1;
+                    break;
+                }
+
+                // Save xed and addr into a map to be used later.
+                pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
+                localInsVector.push_back(p);
+                //local_instrs_map[addr] = xedd;
                 continue;
-            ADDRINT addr = INS_Address(insInline);
-
-            //debug print of orig instruction:
-            if (KnobVerbose) {
-                cerr << "old instr: ";
-                cerr << "0x" << hex << INS_Address(insInline) << ": " << INS_Disassemble(insInline) << endl;
-                //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
             }
+            //curr ins is call to inline target
+            RTN_Close(callerRtn);
+            RTN_Open(calleeRtn);
 
-            xed_decoded_inst_t xedd;
+            //debug TC
+            /*
+            //debug TC
+            // Create an unconditional jump instruction:
+            cout << "begin debug TC" << endl;
+
+            ADDRINT addr2 = INS_Address(ins);
+            xed_decoded_inst_t xedd2;
             xed_error_enum_t xed_code;
 
-            xed_decoded_inst_zero_set_mode(&xedd, &dstate);
+            xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
 
-            xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
+            cout << "1" << endl;
+            xed_code = xed_decode(&xedd2, reinterpret_cast<UINT8*>(addr2), max_inst_len);
             if (xed_code != XED_ERROR_NONE) {
-                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr2 << endl;
                 translated_rtn[translated_rtn_num].instr_map_entry = -1;
                 break;
             }
+            cout << "2" << endl;
+            xed_encoder_instruction_t  enc_instr;
+            xed_inst1(&enc_instr, dstate,
+                XED_ICLASS_JMP, 64,
+                xed_relbr(0x1234567, 32));
 
-            // Save xed and addr into a map to be used later.
-            pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
-            localInsVector.push_back(p);
-            //local_instrs_map[addr] = xedd;
+            cout << "3" << endl;
+            xed_encoder_request_t enc_req;
+            xed_encoder_request_zero_set_mode(&enc_req, &dstate);
+            xed_bool_t convert_ok = xed_convert_to_encoder_request(&enc_req, &enc_instr);
+            if (!convert_ok) {
+                cerr << "conversion to encode request failed" << endl;
+                return -1;
+            }
+
+            cout << "4" << endl;
+            //unsigned int ilen = XED_MAX_INSTRUCTION_BYTES;
+            //unsigned int olen = 0;
+            //xed_error_enum_t xed_error = xed_encode(&enc_req,
+            //    reinterpret_cast<UINT8*>(instr_map[num_of_instr_map_entries - 1].encoded_ins), ilen, &olen);
+            //cout << "5" << endl;
+            //if (xed_error != XED_ERROR_NONE) {
+            //    cerr << "ENCODE ERROR: " << xed_error_enum_t2str(xed_error) << endl;
+            //    return -1;
+            //}
+            cout << "6" << endl;
+            local_instrs_map[addr2 + 1] = xedd2;
+
+            cout << "endof debug TC" << endl;
+            //endof debug TC
+
+            */
+
+            for (INS insInline = RTN_InsHead(calleeRtn); INS_Valid(insInline); insInline = INS_Next(insInline))
+            {
+                if (INS_IsRet(insInline))
+                    continue;
+                ADDRINT addr = INS_Address(insInline);
+
+                //debug print of orig instruction:
+                if (KnobVerbose) {
+                    cerr << "old instr: ";
+                    cerr << "0x" << hex << INS_Address(insInline) << ": " << INS_Disassemble(insInline) << endl;
+                    //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
+                }
+
+                xed_decoded_inst_t xedd;
+                xed_error_enum_t xed_code;
+
+                xed_decoded_inst_zero_set_mode(&xedd, &dstate);
+
+                xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
+                if (xed_code != XED_ERROR_NONE) {
+                    cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+                    translated_rtn[translated_rtn_num].instr_map_entry = -1;
+                    break;
+                }
+
+                // Save xed and addr into a map to be used later.
+                pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
+                localInsVector.push_back(p);
+                //local_instrs_map[addr] = xedd;
+            }
+
+            RTN_Close(calleeRtn);
+            RTN_Open(callerRtn);
         }
+        RTN_Close(callerRtn);
+        translated_rtn_num++;
 
-        RTN_Close(calleeRtn);
-        RTN_Open(callerRtn);
     }
-    RTN_Close(callerRtn);
-    translated_rtn_num++;
+
 
     //gadi code
     /*
@@ -1005,10 +1053,10 @@ int find_candidate_rtns_for_translation(IMG img)
           ADDRINT target_addr = addr + xed_decoded_inst_get_length (&xedd) + disp; 
           RTN rtn = RTN_FindByAddress(target_addr);
           RTN_Open(rtn);          
-          for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
-               ADDRINT addr = INS_Address(ins);
-               cerr << " Callee addr: " << std::hex << addr << "\n";
-          }
+          //for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins)) {
+          //     ADDRINT addr = INS_Address(ins);
+          //     cerr << " Callee addr: " << std::hex << addr << "\n";
+          //}
           RTN_Close(rtn);
        }                
       
@@ -1236,25 +1284,36 @@ VOID ImageLoad(IMG img, VOID *v)
 VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
 {
     cerr<< "started printTargetCallees" << endl;
-    // unordered_map<ADDRINT, vector<Edge>> edgesByRtnMap;
     for (const auto& pair : Map)
     {
         const rtnData& callee = pair.second;
         if (callee.callNum < threshold) // if rtn wasn't called at all
-        {
             continue;
-        }
-        outFile << hex 
-                /*<< "0x" */<< callee.rtnAddr << "," 
-                << dec << callee.rtnInsNum << "," << callee.callNum << ",";
+        //outFile << hex 
+        //        /*<< "0x" */<< callee.rtnAddr << "," 
+        //        << dec << callee.rtnInsNum << "," << callee.callNum << ",";
        
-        for (const auto& caller2Num: callee.callers2callNumMap)
+        //for (const auto& caller2Num: callee.callers2callNumMap)
+        //{
+        //    if (caller2Num.second >= threshold && (callee.callers2callNumMap.size() == 1))
+        //    {
+        //        // print it
+        //        outFile << hex
+        //                /*<< "0x" */<< caller2Num.first << dec << "," << caller2Num.second << ",";
+        //    }
+        //}
+
+        outFile << hex
+            /*<< "0x" */ << callee.rtnAddr << ","
+            /*<< dec << callee.rtnInsNum << "," << callee.callNum << ","*/;
+
+        for (const auto& caller2Num : callee.callers2callNumMap)
         {
-            if (caller2Num.second >= threshold)
+            if (caller2Num.second >= threshold && (callee.callers2callNumMap.size() == 1))
             {
                 // print it
                 outFile << hex
-                        /*<< "0x" */<< caller2Num.first << dec << "-" << caller2Num.second << ",";
+                    /*<< "0x" */ << caller2Num.first /* << dec << "," << caller2Num.second */ << ",";
             }
         }
         outFile << endl;
@@ -1309,10 +1368,27 @@ VOID ImageForProf(IMG img, VOID* v)
 
                 if (RTN_Id(RTN_FindByAddress(calleeAddr)) == RTN_Id(RTN_FindByAddress(rtnAddr))) // this is a recursive call! avoid it at any cost!
                 {
-                    cerr << "found recursive call! in routine " << RTN_Name(rtn) << " address " << rtnAddr << endl;
-                    cerr << "callee address " << calleeAddr << " caller address " << insAddr <<endl;
+                    /*cerr << "found recursive call! in routine " << RTN_Name(rtn) << " address " << rtnAddr << endl;
+                    cerr << "callee address " << calleeAddr << " caller address " << insAddr <<endl;*/
                     continue;
                 }
+
+                //check inline conditions
+                bool doInline = true;
+                RTN_Close(rtn);
+                RTN calleeRtn = RTN_FindByAddress(calleeAddr);
+                RTN_Open(calleeRtn);
+                for (INS calleeIns = RTN_InsHead(calleRtn); INS_Valid(calleeIns); calleeIns = INS_Next(calleIns))
+                {
+
+                }
+                if()
+                RTN_Close(calleeRtn);
+                RTN_Open(rtn);
+                
+                if (!doInline)
+                    continue;
+                //endof check inline conditions
                 
                 if (allRtnMap.find(calleeAddr) == allRtnMap.end()) // rtn not in map yet
                 {
@@ -1350,7 +1426,8 @@ INT32 Usage()
 VOID FiniProf(INT32 code, VOID* v)
 {
     outFile.open("inline-count.csv");
-    outFile << "rtn address,rtn size,total num of calls,num of calls for each caller" << endl;
+    //outFile << "rtn address,rtn size,total num of calls,num of calls for each caller" << endl;
+    outFile << "callee address,caller address," << endl;
     printTargetCallees(THRESHOLD, allRtnMap);
     
     outFile.close();
@@ -1381,90 +1458,123 @@ vector<string> split(const string& s, char delim)
     return result;
 }
 
+int initInlineData()
+{
+    ifstream file;
+    file.open("inline-count.csv");
+    if (file.fail())
+    {
+        cerr << endl << endl
+            << "Something wrong with inline-count.csv. Try running with \"-prof\" option first!"
+            << endl << endl << endl;
+        return ERROR;
+    }
+    string line;
+    const char delimiter = ',';
+    bool firstLine = true;
+    while (1)
+    {
+        vector<string> parses;
+        if (!std::getline(file, line))
+            break;
+        if (firstLine)
+        {
+            firstLine = false;
+            continue;
+        }
+        int start = 0;
+        int end = line.find(delimiter);
+        while (end != (int)string::npos)
+        {
+            parses.push_back(line.substr(start, end - start));
+            start = end + 1;
+            end = line.find(delimiter, start);
+        }
+        if (parses[0].length() < 1 || parses[1].length() < 1)
+        {
+            parses.clear();
+            continue;
+        }
+        //cout << "parses[0]: " << parses[0] << endl;
+        //cout << "parses[1]: " << parses[1] << endl;
+        ADDRINT calleeAddress = stoull(parses[0], nullptr, 16);
+        ADDRINT callerAddress = stoull(parses[1], nullptr, 16);
+        //cout << "callee address: 0x" << calleeAddress << ", caller address: 0x" << callerAddress << endl;
+        pair<ADDRINT, ADDRINT> p(calleeAddress, callerAddress);
+        calleeCallers.push_back(p);
+        parses.clear();
+    }
+    file.close();
+    return SUCCESS;
+}
+
 /* ===================================================================== */
 /* Main                                                                  */
 /* ===================================================================== */
 
 int main(int argc, char * argv[])
 {
-
-    // Initialize pin & symbol manager
-    //out = new std::ofstream("xed-print.out");
-
     if( PIN_Init(argc,argv) )
         return Usage();
-
     PIN_InitSymbols();
-
     if (KnobProf)
     {
-        
         IMG_AddInstrumentFunction(ImageForProf, 0);
-
         // Register FiniProf to be called when the application exits
         PIN_AddFiniFunction(FiniProf, 0);
-
         // Start the program, never returns
         PIN_StartProgram();
-    }
+    } 
 
     // Register ImageLoad
-
-    else if (KnobOpt)
+    if (KnobOpt)
     {
-        chosenRtnFile.open("inline-count.csv");
-		if (chosenRtnFile.fail())
-		{
-			cerr << endl << endl
-			<< "Something wrong with inline-count.csv. try running with \"-prof\" option first!"
-			<< endl << endl << endl;
-			return Usage();
-		}
-
+        //code we probably don't need
+        /*
         string line;
         std::getline(chosenRtnFile, line); // remove headlines
 
-        //FIXME remove comment
-   //     while(chosenRtnFile.good() && !chosenRtnFile.eof())
-   //     {
-   //         std::getline(chosenRtnFile, line);
-   //         
-   //         // const char* str = line.c_str();
-   //         // char* end;
-   //         // char* token = strtok(str, ",");
+        FIXME remove comment
+        while(chosenRtnFile.good() && !chosenRtnFile.eof())
+        {
+            std::getline(chosenRtnFile, line);
+            
+            // const char* str = line.c_str();
+            // char* end;
+            // char* token = strtok(str, ",");
 
-   //         vector<string> in = split(line, ',');
-   //         if (in.size() == 0)
-   //         {
-   //             continue;
-   //         }
-   //         
-   //         vector<string>::iterator it = in.begin();
-   //         // cerr << "after init it. in is len "<< in.size() << " and line is len " << line.size() << "it is now: " << *it << endl;
-   //         ADDRINT calleeAddress = static_cast<ADDRINT>(stoul(*it, NULL, 16));
-   //         // cerr << "after get address" << endl;
-   //         it++;
-   //         UINT32 totalCallCount = stoul(*it, NULL, 10);
-   //         it++;
-   //         rtnData tempRtnData = rtnData(calleeAddress, totalCallCount);
-   //         
-   //         while(it != in.end()) // get callers info
-   //         {
-   //             // cerr << "in while" << endl;
-   //             // token = strtok(NULL, ",");
-   //             // ADDRINT callerAddress = static_cast<ADDRINT>(stoul(*(it++), &end, 16));
-   //             // UINT32 callCount = stoul(*(it++), NULL, 10);
-   //             vector<string> callerInfo = split(*it, '-');
-   //             it++;
-   //             ADDRINT callerAddress = static_cast<ADDRINT>(stoul(callerInfo[0], NULL, 16));
-   //             UINT32 callCount = stoul(callerInfo[1], NULL, 10);
-   //             tempRtnData.callers2callNumMap[callerAddress] = callCount;
-   //         }
+            vector<string> in = split(line, ',');
+            if (in.size() == 0)
+            {
+                continue;
+            }
+            
+            vector<string>::iterator it = in.begin();
+            // cerr << "after init it. in is len "<< in.size() << " and line is len " << line.size() << "it is now: " << *it << endl;
+            ADDRINT calleeAddress = static_cast<ADDRINT>(stoul(*it, NULL, 16));
+            // cerr << "after get address" << endl;
+            it++;
+            UINT32 totalCallCount = stoul(*it, NULL, 10);
+            it++;
+            rtnData tempRtnData = rtnData(calleeAddress, totalCallCount);
+            
+            while(it != in.end()) // get callers info
+            {
+                // cerr << "in while" << endl;
+                // token = strtok(NULL, ",");
+                // ADDRINT callerAddress = static_cast<ADDRINT>(stoul(*(it++), &end, 16));
+                // UINT32 callCount = stoul(*(it++), NULL, 10);
+                vector<string> callerInfo = split(*it, '-');
+                it++;
+                ADDRINT callerAddress = static_cast<ADDRINT>(stoul(callerInfo[0], NULL, 16));
+                UINT32 callCount = stoul(callerInfo[1], NULL, 10);
+                tempRtnData.callers2callNumMap[callerAddress] = callCount;
+            }
 
-   //         
-			//// cout << "RTN_address is " << address << " rtn name is " << RTN_FindNameByAddress(address) <<  endl;
-   //         chosenRtnMap[calleeAddress] = tempRtnData;
-   //     }
+            
+			// cout << "RTN_address is " << address << " rtn name is " << RTN_FindNameByAddress(address) <<  endl;
+            chosenRtnMap[calleeAddress] = tempRtnData;
+        }
 
 
         chosenRtnFile.close();
@@ -1472,17 +1582,15 @@ int main(int argc, char * argv[])
         // outFile << "rtn address,total num of calls,num of calls for each caller" << endl;
         // printTargetCallees(THRESHOLD, chosenRtnMap);
         // outFile.close();
-
-
+        */ //FIXME code we probably don't need
 
         IMG_AddInstrumentFunction(ImageLoad, 0);
-        // PIN_AddFiniFunction(FiniOpt, 0);
-
-        PIN_StartProgramProbed();
+        int initResult = initInlineData();
+        if (initResult == ERROR)
+            return Usage();
+        else if (initResult == SUCCESS)
+            PIN_StartProgramProbed();
     }
-
-    // Start the program, never returns
-    
 
     return 0;
 }
