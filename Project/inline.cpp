@@ -770,7 +770,7 @@ bool canInlineCallee(ADDRINT calleeAddress)
         RTN_Close(rtn);
         return false;
     }
-    RTN_Close(rtn);
+    RTN_Close(rtn);//
     return true;
 }
     
