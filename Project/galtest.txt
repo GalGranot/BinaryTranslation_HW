@@ -1,0 +1,1134 @@
+0x7fdeff102000: push rbp
+0x7fdeff102001: mov rbp, rsp
+0x7fdeff102004: sub rsp, 0x590
+0x7fdeff10200b: mov qword ptr [rbp-0x558], rdi
+0x7fdeff102012: mov qword ptr [rbp-0x560], rsi
+0x7fdeff102019: mov qword ptr [rbp-0x568], rdx
+0x7fdeff102020: mov dword ptr [rbp-0x56c], ecx
+0x7fdeff102026: mov dword ptr [rbp-0x570], r8d
+0x7fdeff10202d: mov dword ptr [rbp-0x574], r9d
+0x7fdeff102034: mov dword ptr [rbp-0x14], 0x0
+0x7fdeff10203b: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10203e: cdqe 
+0x7fdeff102040: mov edx, dword ptr [rbp-0x570]
+0x7fdeff102046: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff10204d: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102050: cdqe 
+0x7fdeff102052: mov edx, dword ptr [rbp-0x574]
+0x7fdeff102058: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff10205f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102062: cdqe 
+0x7fdeff102064: mov edx, dword ptr [rbp+0x10]
+0x7fdeff102067: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff10206e: add dword ptr [rbp-0x14], 0x1
+0x7fdeff102072: jmp 0x7fdeff1028f7
+0x7fdeff102077: cmp dword ptr [rbp-0x14], 0x63
+0x7fdeff10207b: jle 0x7fdeff10208c
+0x7fdeff102081: mov edi, 0x3e9
+0x7fdeff102086: call qword ptr [rip-0x2a7ca84]
+0x7fdeff10208c: sub dword ptr [rbp-0x14], 0x1
+0x7fdeff102090: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102093: cdqe 
+0x7fdeff102095: mov eax, dword ptr [rbp+rax*4-0x200]
+0x7fdeff10209c: mov dword ptr [rbp-0x30], eax
+0x7fdeff10209f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1020a2: cdqe 
+0x7fdeff1020a4: mov eax, dword ptr [rbp+rax*4-0x390]
+0x7fdeff1020ab: mov dword ptr [rbp-0x34], eax
+0x7fdeff1020ae: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1020b1: cdqe 
+0x7fdeff1020b3: mov eax, dword ptr [rbp+rax*4-0x520]
+0x7fdeff1020ba: mov dword ptr [rbp-0x38], eax
+0x7fdeff1020bd: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1020c0: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1020c3: sub edx, eax
+0x7fdeff1020c5: mov eax, edx
+0x7fdeff1020c7: cmp eax, 0x13
+0x7fdeff1020ca: jle 0x7fdeff1020da
+0x7fdeff1020d0: cmp dword ptr [rbp-0x38], 0xe
+0x7fdeff1020d4: jle 0x7fdeff102128
+0x7fdeff1020da: mov r9d, dword ptr [rbp-0x34]
+0x7fdeff1020de: mov r8d, dword ptr [rbp-0x30]
+0x7fdeff1020e2: mov ecx, dword ptr [rbp-0x56c]
+0x7fdeff1020e8: mov rdx, qword ptr [rbp-0x568]
+0x7fdeff1020ef: mov rsi, qword ptr [rbp-0x560]
+0x7fdeff1020f6: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1020fd: mov rdi, qword ptr [rbp+0x18]
+0x7fdeff102101: mov qword ptr [rsp+0x8], rdi
+0x7fdeff102106: mov edi, dword ptr [rbp-0x38]
+0x7fdeff102109: mov dword ptr [rsp], edi
+0x7fdeff10210c: mov rdi, rax
+0x7fdeff10210f: call qword ptr [rip-0x2a7c3d5]
+0x7fdeff102115: mov rax, qword ptr [rbp+0x18]
+0x7fdeff102119: mov eax, dword ptr [rax]
+0x7fdeff10211b: test eax, eax
+0x7fdeff10211d: js 0x7fdeff102901
+0x7fdeff102123: jmp 0x7fdeff1028f7
+0x7fdeff102128: mov eax, dword ptr [rbp-0x34]
+0x7fdeff10212b: mov edx, dword ptr [rbp-0x30]
+0x7fdeff10212e: add eax, edx
+0x7fdeff102130: sar eax, 0x1
+0x7fdeff102132: cdqe 
+0x7fdeff102134: lea rdx, ptr [rax*4]
+0x7fdeff10213c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102143: add rax, rdx
+0x7fdeff102146: mov edx, dword ptr [rax]
+0x7fdeff102148: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10214b: add eax, edx
+0x7fdeff10214d: mov edx, eax
+0x7fdeff10214f: mov rax, qword ptr [rbp-0x560]
+0x7fdeff102156: add rax, rdx
+0x7fdeff102159: movzx eax, byte ptr [rax]
+0x7fdeff10215c: movzx edx, al
+0x7fdeff10215f: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102162: cdqe 
+0x7fdeff102164: lea rcx, ptr [rax*4]
+0x7fdeff10216c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102173: add rax, rcx
+0x7fdeff102176: mov ecx, dword ptr [rax]
+0x7fdeff102178: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10217b: add eax, ecx
+0x7fdeff10217d: mov ecx, eax
+0x7fdeff10217f: mov rax, qword ptr [rbp-0x560]
+0x7fdeff102186: add rax, rcx
+0x7fdeff102189: movzx eax, byte ptr [rax]
+0x7fdeff10218c: movzx ecx, al
+0x7fdeff10218f: mov eax, dword ptr [rbp-0x30]
+0x7fdeff102192: cdqe 
+0x7fdeff102194: lea rsi, ptr [rax*4]
+0x7fdeff10219c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1021a3: add rax, rsi
+0x7fdeff1021a6: mov esi, dword ptr [rax]
+0x7fdeff1021a8: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1021ab: add eax, esi
+0x7fdeff1021ad: mov esi, eax
+0x7fdeff1021af: mov rax, qword ptr [rbp-0x560]
+0x7fdeff1021b6: add rax, rsi
+0x7fdeff1021b9: movzx eax, byte ptr [rax]
+0x7fdeff1021bc: movzx eax, al
+0x7fdeff1021bf: mov esi, ecx
+0x7fdeff1021c1: mov edi, eax
+0x7fdeff1021c3: push rbp
+0x7fdeff1021c4: mov rbp, rsp
+0x7fdeff1021c7: mov ecx, esi
+0x7fdeff1021c9: mov eax, edx
+0x7fdeff1021cb: mov byte ptr [rbp-0x14], dil
+0x7fdeff1021cf: mov byte ptr [rbp-0x18], cl
+0x7fdeff1021d2: mov byte ptr [rbp-0x1c], al
+0x7fdeff1021d5: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff1021d9: cmp al, byte ptr [rbp-0x18]
+0x7fdeff1021dc: jbe 0x7fdeff1021f7
+0x7fdeff1021e2: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff1021e6: mov byte ptr [rbp-0x1], al
+0x7fdeff1021e9: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff1021ed: mov byte ptr [rbp-0x14], al
+0x7fdeff1021f0: movzx eax, byte ptr [rbp-0x1]
+0x7fdeff1021f4: mov byte ptr [rbp-0x18], al
+0x7fdeff1021f7: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff1021fb: cmp al, byte ptr [rbp-0x1c]
+0x7fdeff1021fe: jbe 0x7fdeff10221f
+0x7fdeff102204: movzx eax, byte ptr [rbp-0x1c]
+0x7fdeff102208: mov byte ptr [rbp-0x18], al
+0x7fdeff10220b: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff10220f: cmp al, byte ptr [rbp-0x18]
+0x7fdeff102212: jbe 0x7fdeff10221f
+0x7fdeff102218: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff10221c: mov byte ptr [rbp-0x18], al
+0x7fdeff10221f: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff102223: pop rbp
+0x7fdeff102224: movzx eax, al
+0x7fdeff102227: mov dword ptr [rbp-0x3c], eax
+0x7fdeff10222a: mov eax, dword ptr [rbp-0x30]
+0x7fdeff10222d: mov dword ptr [rbp-0xc], eax
+0x7fdeff102230: mov eax, dword ptr [rbp-0xc]
+0x7fdeff102233: mov dword ptr [rbp-0x4], eax
+0x7fdeff102236: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102239: mov dword ptr [rbp-0x10], eax
+0x7fdeff10223c: mov eax, dword ptr [rbp-0x10]
+0x7fdeff10223f: mov dword ptr [rbp-0x8], eax
+0x7fdeff102242: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102245: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff102248: jle 0x7fdeff102253
+0x7fdeff10224e: jmp 0x7fdeff102323
+0x7fdeff102253: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102256: cdqe 
+0x7fdeff102258: lea rdx, ptr [rax*4]
+0x7fdeff102260: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102267: add rax, rdx
+0x7fdeff10226a: mov edx, dword ptr [rax]
+0x7fdeff10226c: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10226f: add eax, edx
+0x7fdeff102271: mov edx, eax
+0x7fdeff102273: mov rax, qword ptr [rbp-0x560]
+0x7fdeff10227a: add rax, rdx
+0x7fdeff10227d: movzx eax, byte ptr [rax]
+0x7fdeff102280: movzx eax, al
+0x7fdeff102283: sub eax, dword ptr [rbp-0x3c]
+0x7fdeff102286: mov dword ptr [rbp-0x40], eax
+0x7fdeff102289: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10228d: jnz 0x7fdeff10230b
+0x7fdeff102293: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102296: cdqe 
+0x7fdeff102298: lea rdx, ptr [rax*4]
+0x7fdeff1022a0: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022a7: add rax, rdx
+0x7fdeff1022aa: mov eax, dword ptr [rax]
+0x7fdeff1022ac: mov dword ptr [rbp-0x44], eax
+0x7fdeff1022af: mov eax, dword ptr [rbp-0x4]
+0x7fdeff1022b2: cdqe 
+0x7fdeff1022b4: lea rdx, ptr [rax*4]
+0x7fdeff1022bc: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022c3: add rdx, rax
+0x7fdeff1022c6: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1022c9: cdqe 
+0x7fdeff1022cb: lea rcx, ptr [rax*4]
+0x7fdeff1022d3: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022da: add rax, rcx
+0x7fdeff1022dd: mov eax, dword ptr [rax]
+0x7fdeff1022df: mov dword ptr [rdx], eax
+0x7fdeff1022e1: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1022e4: cdqe 
+0x7fdeff1022e6: lea rdx, ptr [rax*4]
+0x7fdeff1022ee: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022f5: add rdx, rax
+0x7fdeff1022f8: mov eax, dword ptr [rbp-0x44]
+0x7fdeff1022fb: mov dword ptr [rdx], eax
+0x7fdeff1022fd: add dword ptr [rbp-0xc], 0x1
+0x7fdeff102301: add dword ptr [rbp-0x4], 0x1
+0x7fdeff102305: nop
+0x7fdeff102306: jmp 0x7fdeff102242
+0x7fdeff10230b: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10230f: jle 0x7fdeff10231a
+0x7fdeff102315: jmp 0x7fdeff102323
+0x7fdeff10231a: add dword ptr [rbp-0x4], 0x1
+0x7fdeff10231e: jmp 0x7fdeff102242
+0x7fdeff102323: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102326: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff102329: jle 0x7fdeff102334
+0x7fdeff10232f: jmp 0x7fdeff102404
+0x7fdeff102334: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102337: cdqe 
+0x7fdeff102339: lea rdx, ptr [rax*4]
+0x7fdeff102341: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102348: add rax, rdx
+0x7fdeff10234b: mov edx, dword ptr [rax]
+0x7fdeff10234d: mov eax, dword ptr [rbp-0x38]
+0x7fdeff102350: add eax, edx
+0x7fdeff102352: mov edx, eax
+0x7fdeff102354: mov rax, qword ptr [rbp-0x560]
+0x7fdeff10235b: add rax, rdx
+0x7fdeff10235e: movzx eax, byte ptr [rax]
+0x7fdeff102361: movzx eax, al
+0x7fdeff102364: sub eax, dword ptr [rbp-0x3c]
+0x7fdeff102367: mov dword ptr [rbp-0x40], eax
+0x7fdeff10236a: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10236e: jnz 0x7fdeff1023ec
+0x7fdeff102374: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102377: cdqe 
+0x7fdeff102379: lea rdx, ptr [rax*4]
+0x7fdeff102381: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102388: add rax, rdx
+0x7fdeff10238b: mov eax, dword ptr [rax]
+0x7fdeff10238d: mov dword ptr [rbp-0x48], eax
+0x7fdeff102390: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102393: cdqe 
+0x7fdeff102395: lea rdx, ptr [rax*4]
+0x7fdeff10239d: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023a4: add rdx, rax
+0x7fdeff1023a7: mov eax, dword ptr [rbp-0x10]
+0x7fdeff1023aa: cdqe 
+0x7fdeff1023ac: lea rcx, ptr [rax*4]
+0x7fdeff1023b4: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023bb: add rax, rcx
+0x7fdeff1023be: mov eax, dword ptr [rax]
+0x7fdeff1023c0: mov dword ptr [rdx], eax
+0x7fdeff1023c2: mov eax, dword ptr [rbp-0x10]
+0x7fdeff1023c5: cdqe 
+0x7fdeff1023c7: lea rdx, ptr [rax*4]
+0x7fdeff1023cf: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023d6: add rdx, rax
+0x7fdeff1023d9: mov eax, dword ptr [rbp-0x48]
+0x7fdeff1023dc: mov dword ptr [rdx], eax
+0x7fdeff1023de: sub dword ptr [rbp-0x10], 0x1
+0x7fdeff1023e2: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff1023e6: nop
+0x7fdeff1023e7: jmp 0x7fdeff102323
+0x7fdeff1023ec: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff1023f0: jns 0x7fdeff1023fb
+0x7fdeff1023f6: jmp 0x7fdeff102404
+0x7fdeff1023fb: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff1023ff: jmp 0x7fdeff102323
+0x7fdeff102404: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102407: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff10240a: jle 0x7fdeff102422
+0x7fdeff102410: nop
+0x7fdeff102411: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102414: cmp eax, dword ptr [rbp-0xc]
+0x7fdeff102417: jnl 0x7fdeff1024d2
+0x7fdeff10241d: jmp 0x7fdeff102499
+0x7fdeff102422: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102425: cdqe 
+0x7fdeff102427: lea rdx, ptr [rax*4]
+0x7fdeff10242f: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102436: add rax, rdx
+0x7fdeff102439: mov eax, dword ptr [rax]
+0x7fdeff10243b: mov dword ptr [rbp-0x64], eax
+0x7fdeff10243e: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102441: cdqe 
+0x7fdeff102443: lea rdx, ptr [rax*4]
+0x7fdeff10244b: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102452: add rdx, rax
+0x7fdeff102455: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102458: cdqe 
+0x7fdeff10245a: lea rcx, ptr [rax*4]
+0x7fdeff102462: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102469: add rax, rcx
+0x7fdeff10246c: mov eax, dword ptr [rax]
+0x7fdeff10246e: mov dword ptr [rdx], eax
+0x7fdeff102470: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102473: cdqe 
+0x7fdeff102475: lea rdx, ptr [rax*4]
+0x7fdeff10247d: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102484: add rdx, rax
+0x7fdeff102487: mov eax, dword ptr [rbp-0x64]
+0x7fdeff10248a: mov dword ptr [rdx], eax
+0x7fdeff10248c: add dword ptr [rbp-0x4], 0x1
+0x7fdeff102490: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff102494: jmp 0x7fdeff102242
+0x7fdeff102499: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10249c: cdqe 
+0x7fdeff10249e: mov edx, dword ptr [rbp-0x30]
+0x7fdeff1024a1: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff1024a8: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1024ab: cdqe 
+0x7fdeff1024ad: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1024b0: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff1024b7: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1024ba: lea edx, ptr [rax+0x1]
+0x7fdeff1024bd: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1024c0: cdqe 
+0x7fdeff1024c2: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff1024c9: add dword ptr [rbp-0x14], 0x1
+0x7fdeff1024cd: jmp 0x7fdeff1028f7
+0x7fdeff1024d2: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1024d5: mov edx, dword ptr [rbp-0x4]
+0x7fdeff1024d8: sub edx, eax
+0x7fdeff1024da: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1024dd: mov ecx, dword ptr [rbp-0xc]
+0x7fdeff1024e0: sub ecx, eax
+0x7fdeff1024e2: mov eax, ecx
+0x7fdeff1024e4: cmp edx, eax
+0x7fdeff1024e6: cmovle eax, edx
+0x7fdeff1024e9: mov dword ptr [rbp-0x40], eax
+0x7fdeff1024ec: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1024ef: mov dword ptr [rbp-0x18], eax
+0x7fdeff1024f2: mov eax, dword ptr [rbp-0x40]
+0x7fdeff1024f5: mov edx, dword ptr [rbp-0x4]
+0x7fdeff1024f8: sub edx, eax
+0x7fdeff1024fa: mov eax, edx
+0x7fdeff1024fc: mov dword ptr [rbp-0x1c], eax
+0x7fdeff1024ff: mov eax, dword ptr [rbp-0x40]
+0x7fdeff102502: mov dword ptr [rbp-0x20], eax
+0x7fdeff102505: jmp 0x7fdeff102580
+0x7fdeff10250a: mov eax, dword ptr [rbp-0x18]
+0x7fdeff10250d: cdqe 
+0x7fdeff10250f: lea rdx, ptr [rax*4]
+0x7fdeff102517: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10251e: add rax, rdx
+0x7fdeff102521: mov eax, dword ptr [rax]
+0x7fdeff102523: mov dword ptr [rbp-0x4c], eax
+0x7fdeff102526: mov eax, dword ptr [rbp-0x18]
+0x7fdeff102529: cdqe 
+0x7fdeff10252b: lea rdx, ptr [rax*4]
+0x7fdeff102533: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10253a: add rdx, rax
+0x7fdeff10253d: mov eax, dword ptr [rbp-0x1c]
+0x7fdeff102540: cdqe 
+0x7fdeff102542: lea rcx, ptr [rax*4]
+0x7fdeff10254a: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102551: add rax, rcx
+0x7fdeff102554: mov eax, dword ptr [rax]
+0x7fdeff102556: mov dword ptr [rdx], eax
+0x7fdeff102558: mov eax, dword ptr [rbp-0x1c]
+0x7fdeff10255b: cdqe 
+0x7fdeff10255d: lea rdx, ptr [rax*4]
+0x7fdeff102565: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10256c: add rdx, rax
+0x7fdeff10256f: mov eax, dword ptr [rbp-0x4c]
+0x7fdeff102572: mov dword ptr [rdx], eax
+0x7fdeff102574: add dword ptr [rbp-0x18], 0x1
+0x7fdeff102578: add dword ptr [rbp-0x1c], 0x1
+0x7fdeff10257c: sub dword ptr [rbp-0x20], 0x1
+0x7fdeff102580: cmp dword ptr [rbp-0x20], 0x0
+0x7fdeff102584: jnle 0x7fdeff10250a
+0x7fdeff10258a: mov eax, dword ptr [rbp-0x8]
+0x7fdeff10258d: mov edx, dword ptr [rbp-0x10]
+0x7fdeff102590: sub edx, eax
+0x7fdeff102592: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102595: mov ecx, dword ptr [rbp-0x34]
+0x7fdeff102598: sub ecx, eax
+0x7fdeff10259a: mov eax, ecx
+0x7fdeff10259c: cmp edx, eax
+0x7fdeff10259e: cmovle eax, edx
+0x7fdeff1025a1: mov dword ptr [rbp-0x50], eax
+0x7fdeff1025a4: mov eax, dword ptr [rbp-0x4]
+0x7fdeff1025a7: mov dword ptr [rbp-0x24], eax
+0x7fdeff1025aa: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1025ad: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1025b0: sub edx, eax
+0x7fdeff1025b2: mov eax, edx
+0x7fdeff1025b4: add eax, 0x1
+0x7fdeff1025b7: mov dword ptr [rbp-0x28], eax
+0x7fdeff1025ba: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1025bd: mov dword ptr [rbp-0x2c], eax
+0x7fdeff1025c0: jmp 0x7fdeff10263b
+0x7fdeff1025c5: mov eax, dword ptr [rbp-0x24]
+0x7fdeff1025c8: cdqe 
+0x7fdeff1025ca: lea rdx, ptr [rax*4]
+0x7fdeff1025d2: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1025d9: add rax, rdx
+0x7fdeff1025dc: mov eax, dword ptr [rax]
+0x7fdeff1025de: mov dword ptr [rbp-0x54], eax
+0x7fdeff1025e1: mov eax, dword ptr [rbp-0x24]
+0x7fdeff1025e4: cdqe 
+0x7fdeff1025e6: lea rdx, ptr [rax*4]
+0x7fdeff1025ee: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1025f5: add rdx, rax
+0x7fdeff1025f8: mov eax, dword ptr [rbp-0x28]
+0x7fdeff1025fb: cdqe 
+0x7fdeff1025fd: lea rcx, ptr [rax*4]
+0x7fdeff102605: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10260c: add rax, rcx
+0x7fdeff10260f: mov eax, dword ptr [rax]
+0x7fdeff102611: mov dword ptr [rdx], eax
+0x7fdeff102613: mov eax, dword ptr [rbp-0x28]
+0x7fdeff102616: cdqe 
+0x7fdeff102618: lea rdx, ptr [rax*4]
+0x7fdeff102620: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102627: add rdx, rax
+0x7fdeff10262a: mov eax, dword ptr [rbp-0x54]
+0x7fdeff10262d: mov dword ptr [rdx], eax
+0x7fdeff10262f: add dword ptr [rbp-0x24], 0x1
+0x7fdeff102633: add dword ptr [rbp-0x28], 0x1
+0x7fdeff102637: sub dword ptr [rbp-0x2c], 0x1
+0x7fdeff10263b: cmp dword ptr [rbp-0x2c], 0x0
+0x7fdeff10263f: jnle 0x7fdeff1025c5
+0x7fdeff102645: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102648: mov edx, dword ptr [rbp-0x30]
+0x7fdeff10264b: add eax, edx
+0x7fdeff10264d: sub eax, dword ptr [rbp-0xc]
+0x7fdeff102650: sub eax, 0x1
+0x7fdeff102653: mov dword ptr [rbp-0x40], eax
+0x7fdeff102656: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102659: mov edx, dword ptr [rbp-0x8]
+0x7fdeff10265c: sub edx, eax
+0x7fdeff10265e: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102661: add eax, edx
+0x7fdeff102663: add eax, 0x1
+0x7fdeff102666: mov dword ptr [rbp-0x50], eax
+0x7fdeff102669: mov eax, dword ptr [rbp-0x30]
+0x7fdeff10266c: mov dword ptr [rbp-0x530], eax
+0x7fdeff102672: mov eax, dword ptr [rbp-0x40]
+0x7fdeff102675: mov dword ptr [rbp-0x540], eax
+0x7fdeff10267b: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10267e: mov dword ptr [rbp-0x550], eax
+0x7fdeff102684: mov eax, dword ptr [rbp-0x50]
+0x7fdeff102687: mov dword ptr [rbp-0x52c], eax
+0x7fdeff10268d: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102690: mov dword ptr [rbp-0x53c], eax
+0x7fdeff102696: mov eax, dword ptr [rbp-0x38]
+0x7fdeff102699: mov dword ptr [rbp-0x54c], eax
+0x7fdeff10269f: mov eax, dword ptr [rbp-0x40]
+0x7fdeff1026a2: add eax, 0x1
+0x7fdeff1026a5: mov dword ptr [rbp-0x528], eax
+0x7fdeff1026ab: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1026ae: sub eax, 0x1
+0x7fdeff1026b1: mov dword ptr [rbp-0x538], eax
+0x7fdeff1026b7: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1026ba: add eax, 0x1
+0x7fdeff1026bd: mov dword ptr [rbp-0x548], eax
+0x7fdeff1026c3: mov edx, dword ptr [rbp-0x540]
+0x7fdeff1026c9: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1026cf: mov ecx, edx
+0x7fdeff1026d1: sub ecx, eax
+0x7fdeff1026d3: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff1026d9: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1026df: sub edx, eax
+0x7fdeff1026e1: mov eax, edx
+0x7fdeff1026e3: cmp ecx, eax
+0x7fdeff1026e5: jnl 0x7fdeff102745
+0x7fdeff1026eb: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1026f1: mov dword ptr [rbp-0x58], eax
+0x7fdeff1026f4: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1026fa: mov dword ptr [rbp-0x530], eax
+0x7fdeff102700: mov eax, dword ptr [rbp-0x58]
+0x7fdeff102703: mov dword ptr [rbp-0x52c], eax
+0x7fdeff102709: mov eax, dword ptr [rbp-0x540]
+0x7fdeff10270f: mov dword ptr [rbp-0x58], eax
+0x7fdeff102712: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff102718: mov dword ptr [rbp-0x540], eax
+0x7fdeff10271e: mov eax, dword ptr [rbp-0x58]
+0x7fdeff102721: mov dword ptr [rbp-0x53c], eax
+0x7fdeff102727: mov eax, dword ptr [rbp-0x550]
+0x7fdeff10272d: mov dword ptr [rbp-0x58], eax
+0x7fdeff102730: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff102736: mov dword ptr [rbp-0x550], eax
+0x7fdeff10273c: mov eax, dword ptr [rbp-0x58]
+0x7fdeff10273f: mov dword ptr [rbp-0x54c], eax
+0x7fdeff102745: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff10274b: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff102751: mov ecx, edx
+0x7fdeff102753: sub ecx, eax
+0x7fdeff102755: mov edx, dword ptr [rbp-0x538]
+0x7fdeff10275b: mov eax, dword ptr [rbp-0x528]
+0x7fdeff102761: sub edx, eax
+0x7fdeff102763: mov eax, edx
+0x7fdeff102765: cmp ecx, eax
+0x7fdeff102767: jnl 0x7fdeff1027c7
+0x7fdeff10276d: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff102773: mov dword ptr [rbp-0x5c], eax
+0x7fdeff102776: mov eax, dword ptr [rbp-0x528]
+0x7fdeff10277c: mov dword ptr [rbp-0x52c], eax
+0x7fdeff102782: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff102785: mov dword ptr [rbp-0x528], eax
+0x7fdeff10278b: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff102791: mov dword ptr [rbp-0x5c], eax
+0x7fdeff102794: mov eax, dword ptr [rbp-0x538]
+0x7fdeff10279a: mov dword ptr [rbp-0x53c], eax
+0x7fdeff1027a0: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff1027a3: mov dword ptr [rbp-0x538], eax
+0x7fdeff1027a9: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff1027af: mov dword ptr [rbp-0x5c], eax
+0x7fdeff1027b2: mov eax, dword ptr [rbp-0x548]
+0x7fdeff1027b8: mov dword ptr [rbp-0x54c], eax
+0x7fdeff1027be: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff1027c1: mov dword ptr [rbp-0x548], eax
+0x7fdeff1027c7: mov edx, dword ptr [rbp-0x540]
+0x7fdeff1027cd: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1027d3: mov ecx, edx
+0x7fdeff1027d5: sub ecx, eax
+0x7fdeff1027d7: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff1027dd: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1027e3: sub edx, eax
+0x7fdeff1027e5: mov eax, edx
+0x7fdeff1027e7: cmp ecx, eax
+0x7fdeff1027e9: jnl 0x7fdeff102849
+0x7fdeff1027ef: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1027f5: mov dword ptr [rbp-0x60], eax
+0x7fdeff1027f8: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1027fe: mov dword ptr [rbp-0x530], eax
+0x7fdeff102804: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102807: mov dword ptr [rbp-0x52c], eax
+0x7fdeff10280d: mov eax, dword ptr [rbp-0x540]
+0x7fdeff102813: mov dword ptr [rbp-0x60], eax
+0x7fdeff102816: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff10281c: mov dword ptr [rbp-0x540], eax
+0x7fdeff102822: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102825: mov dword ptr [rbp-0x53c], eax
+0x7fdeff10282b: mov eax, dword ptr [rbp-0x550]
+0x7fdeff102831: mov dword ptr [rbp-0x60], eax
+0x7fdeff102834: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff10283a: mov dword ptr [rbp-0x550], eax
+0x7fdeff102840: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102843: mov dword ptr [rbp-0x54c], eax
+0x7fdeff102849: mov edx, dword ptr [rbp-0x530]
+0x7fdeff10284f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102852: cdqe 
+0x7fdeff102854: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff10285b: mov edx, dword ptr [rbp-0x540]
+0x7fdeff102861: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102864: cdqe 
+0x7fdeff102866: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff10286d: mov edx, dword ptr [rbp-0x550]
+0x7fdeff102873: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102876: cdqe 
+0x7fdeff102878: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff10287f: add dword ptr [rbp-0x14], 0x1
+0x7fdeff102883: mov edx, dword ptr [rbp-0x52c]
+0x7fdeff102889: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10288c: cdqe 
+0x7fdeff10288e: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff102895: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff10289b: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10289e: cdqe 
+0x7fdeff1028a0: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff1028a7: mov edx, dword ptr [rbp-0x54c]
+0x7fdeff1028ad: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102000: push rbp
+0x7fdeff102001: mov rbp, rsp
+0x7fdeff102004: sub rsp, 0x590
+0x7fdeff10200b: mov qword ptr [rbp-0x558], rdi
+0x7fdeff102012: mov qword ptr [rbp-0x560], rsi
+0x7fdeff102019: mov qword ptr [rbp-0x568], rdx
+0x7fdeff102020: mov dword ptr [rbp-0x56c], ecx
+0x7fdeff102026: mov dword ptr [rbp-0x570], r8d
+0x7fdeff10202d: mov dword ptr [rbp-0x574], r9d
+0x7fdeff102034: mov dword ptr [rbp-0x14], 0x0
+0x7fdeff10203b: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10203e: cdqe 
+0x7fdeff102040: mov edx, dword ptr [rbp-0x570]
+0x7fdeff102046: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff10204d: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102050: cdqe 
+0x7fdeff102052: mov edx, dword ptr [rbp-0x574]
+0x7fdeff102058: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff10205f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102062: cdqe 
+0x7fdeff102064: mov edx, dword ptr [rbp+0x10]
+0x7fdeff102067: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff10206e: add dword ptr [rbp-0x14], 0x1
+0x7fdeff102072: jmp 0x7fdeff1028f7
+0x7fdeff102077: cmp dword ptr [rbp-0x14], 0x63
+0x7fdeff10207b: jle 0x7fdeff10208c
+0x7fdeff102081: mov edi, 0x3e9
+0x7fdeff102086: call qword ptr [rip-0x2a7ca84]
+0x7fdeff10208c: sub dword ptr [rbp-0x14], 0x1
+0x7fdeff102090: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102093: cdqe 
+0x7fdeff102095: mov eax, dword ptr [rbp+rax*4-0x200]
+0x7fdeff10209c: mov dword ptr [rbp-0x30], eax
+0x7fdeff10209f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1020a2: cdqe 
+0x7fdeff1020a4: mov eax, dword ptr [rbp+rax*4-0x390]
+0x7fdeff1020ab: mov dword ptr [rbp-0x34], eax
+0x7fdeff1020ae: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1020b1: cdqe 
+0x7fdeff1020b3: mov eax, dword ptr [rbp+rax*4-0x520]
+0x7fdeff1020ba: mov dword ptr [rbp-0x38], eax
+0x7fdeff1020bd: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1020c0: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1020c3: sub edx, eax
+0x7fdeff1020c5: mov eax, edx
+0x7fdeff1020c7: cmp eax, 0x13
+0x7fdeff1020ca: jle 0x7fdeff1020da
+0x7fdeff1020d0: cmp dword ptr [rbp-0x38], 0xe
+0x7fdeff1020d4: jle 0x7fdeff102128
+0x7fdeff1020da: mov r9d, dword ptr [rbp-0x34]
+0x7fdeff1020de: mov r8d, dword ptr [rbp-0x30]
+0x7fdeff1020e2: mov ecx, dword ptr [rbp-0x56c]
+0x7fdeff1020e8: mov rdx, qword ptr [rbp-0x568]
+0x7fdeff1020ef: mov rsi, qword ptr [rbp-0x560]
+0x7fdeff1020f6: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1020fd: mov rdi, qword ptr [rbp+0x18]
+0x7fdeff102101: mov qword ptr [rsp+0x8], rdi
+0x7fdeff102106: mov edi, dword ptr [rbp-0x38]
+0x7fdeff102109: mov dword ptr [rsp], edi
+0x7fdeff10210c: mov rdi, rax
+0x7fdeff10210f: call qword ptr [rip-0x2a7c3d5]
+0x7fdeff102115: mov rax, qword ptr [rbp+0x18]
+0x7fdeff102119: mov eax, dword ptr [rax]
+0x7fdeff10211b: test eax, eax
+0x7fdeff10211d: js 0x7fdeff102901
+0x7fdeff102123: jmp 0x7fdeff1028f7
+0x7fdeff102128: mov eax, dword ptr [rbp-0x34]
+0x7fdeff10212b: mov edx, dword ptr [rbp-0x30]
+0x7fdeff10212e: add eax, edx
+0x7fdeff102130: sar eax, 0x1
+0x7fdeff102132: cdqe 
+0x7fdeff102134: lea rdx, ptr [rax*4]
+0x7fdeff10213c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102143: add rax, rdx
+0x7fdeff102146: mov edx, dword ptr [rax]
+0x7fdeff102148: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10214b: add eax, edx
+0x7fdeff10214d: mov edx, eax
+0x7fdeff10214f: mov rax, qword ptr [rbp-0x560]
+0x7fdeff102156: add rax, rdx
+0x7fdeff102159: movzx eax, byte ptr [rax]
+0x7fdeff10215c: movzx edx, al
+0x7fdeff10215f: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102162: cdqe 
+0x7fdeff102164: lea rcx, ptr [rax*4]
+0x7fdeff10216c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102173: add rax, rcx
+0x7fdeff102176: mov ecx, dword ptr [rax]
+0x7fdeff102178: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10217b: add eax, ecx
+0x7fdeff10217d: mov ecx, eax
+0x7fdeff10217f: mov rax, qword ptr [rbp-0x560]
+0x7fdeff102186: add rax, rcx
+0x7fdeff102189: movzx eax, byte ptr [rax]
+0x7fdeff10218c: movzx ecx, al
+0x7fdeff10218f: mov eax, dword ptr [rbp-0x30]
+0x7fdeff102192: cdqe 
+0x7fdeff102194: lea rsi, ptr [rax*4]
+0x7fdeff10219c: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1021a3: add rax, rsi
+0x7fdeff1021a6: mov esi, dword ptr [rax]
+0x7fdeff1021a8: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1021ab: add eax, esi
+0x7fdeff1021ad: mov esi, eax
+0x7fdeff1021af: mov rax, qword ptr [rbp-0x560]
+0x7fdeff1021b6: add rax, rsi
+0x7fdeff1021b9: movzx eax, byte ptr [rax]
+0x7fdeff1021bc: movzx eax, al
+0x7fdeff1021bf: mov esi, ecx
+0x7fdeff1021c1: mov edi, eax
+0x7fdeff1021c3: push rbp
+0x7fdeff1021c4: mov rbp, rsp
+0x7fdeff1021c7: mov ecx, esi
+0x7fdeff1021c9: mov eax, edx
+0x7fdeff1021cb: mov byte ptr [rbp-0x14], dil
+0x7fdeff1021cf: mov byte ptr [rbp-0x18], cl
+0x7fdeff1021d2: mov byte ptr [rbp-0x1c], al
+0x7fdeff1021d5: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff1021d9: cmp al, byte ptr [rbp-0x18]
+0x7fdeff1021dc: jbe 0x7fdeff1021f7
+0x7fdeff1021e2: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff1021e6: mov byte ptr [rbp-0x1], al
+0x7fdeff1021e9: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff1021ed: mov byte ptr [rbp-0x14], al
+0x7fdeff1021f0: movzx eax, byte ptr [rbp-0x1]
+0x7fdeff1021f4: mov byte ptr [rbp-0x18], al
+0x7fdeff1021f7: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff1021fb: cmp al, byte ptr [rbp-0x1c]
+0x7fdeff1021fe: jbe 0x7fdeff10221f
+0x7fdeff102204: movzx eax, byte ptr [rbp-0x1c]
+0x7fdeff102208: mov byte ptr [rbp-0x18], al
+0x7fdeff10220b: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff10220f: cmp al, byte ptr [rbp-0x18]
+0x7fdeff102212: jbe 0x7fdeff10221f
+0x7fdeff102218: movzx eax, byte ptr [rbp-0x14]
+0x7fdeff10221c: mov byte ptr [rbp-0x18], al
+0x7fdeff10221f: movzx eax, byte ptr [rbp-0x18]
+0x7fdeff102223: pop rbp
+0x7fdeff102224: movzx eax, al
+0x7fdeff102227: mov dword ptr [rbp-0x3c], eax
+0x7fdeff10222a: mov eax, dword ptr [rbp-0x30]
+0x7fdeff10222d: mov dword ptr [rbp-0xc], eax
+0x7fdeff102230: mov eax, dword ptr [rbp-0xc]
+0x7fdeff102233: mov dword ptr [rbp-0x4], eax
+0x7fdeff102236: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102239: mov dword ptr [rbp-0x10], eax
+0x7fdeff10223c: mov eax, dword ptr [rbp-0x10]
+0x7fdeff10223f: mov dword ptr [rbp-0x8], eax
+0x7fdeff102242: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102245: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff102248: jle 0x7fdeff102253
+0x7fdeff10224e: jmp 0x7fdeff102323
+0x7fdeff102253: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102256: cdqe 
+0x7fdeff102258: lea rdx, ptr [rax*4]
+0x7fdeff102260: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102267: add rax, rdx
+0x7fdeff10226a: mov edx, dword ptr [rax]
+0x7fdeff10226c: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10226f: add eax, edx
+0x7fdeff102271: mov edx, eax
+0x7fdeff102273: mov rax, qword ptr [rbp-0x560]
+0x7fdeff10227a: add rax, rdx
+0x7fdeff10227d: movzx eax, byte ptr [rax]
+0x7fdeff102280: movzx eax, al
+0x7fdeff102283: sub eax, dword ptr [rbp-0x3c]
+0x7fdeff102286: mov dword ptr [rbp-0x40], eax
+0x7fdeff102289: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10228d: jnz 0x7fdeff10230b
+0x7fdeff102293: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102296: cdqe 
+0x7fdeff102298: lea rdx, ptr [rax*4]
+0x7fdeff1022a0: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022a7: add rax, rdx
+0x7fdeff1022aa: mov eax, dword ptr [rax]
+0x7fdeff1022ac: mov dword ptr [rbp-0x44], eax
+0x7fdeff1022af: mov eax, dword ptr [rbp-0x4]
+0x7fdeff1022b2: cdqe 
+0x7fdeff1022b4: lea rdx, ptr [rax*4]
+0x7fdeff1022bc: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022c3: add rdx, rax
+0x7fdeff1022c6: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1022c9: cdqe 
+0x7fdeff1022cb: lea rcx, ptr [rax*4]
+0x7fdeff1022d3: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022da: add rax, rcx
+0x7fdeff1022dd: mov eax, dword ptr [rax]
+0x7fdeff1022df: mov dword ptr [rdx], eax
+0x7fdeff1022e1: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1022e4: cdqe 
+0x7fdeff1022e6: lea rdx, ptr [rax*4]
+0x7fdeff1022ee: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1022f5: add rdx, rax
+0x7fdeff1022f8: mov eax, dword ptr [rbp-0x44]
+0x7fdeff1022fb: mov dword ptr [rdx], eax
+0x7fdeff1022fd: add dword ptr [rbp-0xc], 0x1
+0x7fdeff102301: add dword ptr [rbp-0x4], 0x1
+0x7fdeff102305: nop
+0x7fdeff102306: jmp 0x7fdeff102242
+0x7fdeff10230b: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10230f: jle 0x7fdeff10231a
+0x7fdeff102315: jmp 0x7fdeff102323
+0x7fdeff10231a: add dword ptr [rbp-0x4], 0x1
+0x7fdeff10231e: jmp 0x7fdeff102242
+0x7fdeff102323: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102326: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff102329: jle 0x7fdeff102334
+0x7fdeff10232f: jmp 0x7fdeff102404
+0x7fdeff102334: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102337: cdqe 
+0x7fdeff102339: lea rdx, ptr [rax*4]
+0x7fdeff102341: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102348: add rax, rdx
+0x7fdeff10234b: mov edx, dword ptr [rax]
+0x7fdeff10234d: mov eax, dword ptr [rbp-0x38]
+0x7fdeff102350: add eax, edx
+0x7fdeff102352: mov edx, eax
+0x7fdeff102354: mov rax, qword ptr [rbp-0x560]
+0x7fdeff10235b: add rax, rdx
+0x7fdeff10235e: movzx eax, byte ptr [rax]
+0x7fdeff102361: movzx eax, al
+0x7fdeff102364: sub eax, dword ptr [rbp-0x3c]
+0x7fdeff102367: mov dword ptr [rbp-0x40], eax
+0x7fdeff10236a: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff10236e: jnz 0x7fdeff1023ec
+0x7fdeff102374: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102377: cdqe 
+0x7fdeff102379: lea rdx, ptr [rax*4]
+0x7fdeff102381: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102388: add rax, rdx
+0x7fdeff10238b: mov eax, dword ptr [rax]
+0x7fdeff10238d: mov dword ptr [rbp-0x48], eax
+0x7fdeff102390: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102393: cdqe 
+0x7fdeff102395: lea rdx, ptr [rax*4]
+0x7fdeff10239d: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023a4: add rdx, rax
+0x7fdeff1023a7: mov eax, dword ptr [rbp-0x10]
+0x7fdeff1023aa: cdqe 
+0x7fdeff1023ac: lea rcx, ptr [rax*4]
+0x7fdeff1023b4: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023bb: add rax, rcx
+0x7fdeff1023be: mov eax, dword ptr [rax]
+0x7fdeff1023c0: mov dword ptr [rdx], eax
+0x7fdeff1023c2: mov eax, dword ptr [rbp-0x10]
+0x7fdeff1023c5: cdqe 
+0x7fdeff1023c7: lea rdx, ptr [rax*4]
+0x7fdeff1023cf: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1023d6: add rdx, rax
+0x7fdeff1023d9: mov eax, dword ptr [rbp-0x48]
+0x7fdeff1023dc: mov dword ptr [rdx], eax
+0x7fdeff1023de: sub dword ptr [rbp-0x10], 0x1
+0x7fdeff1023e2: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff1023e6: nop
+0x7fdeff1023e7: jmp 0x7fdeff102323
+0x7fdeff1023ec: cmp dword ptr [rbp-0x40], 0x0
+0x7fdeff1023f0: jns 0x7fdeff1023fb
+0x7fdeff1023f6: jmp 0x7fdeff102404
+0x7fdeff1023fb: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff1023ff: jmp 0x7fdeff102323
+0x7fdeff102404: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102407: cmp eax, dword ptr [rbp-0x8]
+0x7fdeff10240a: jle 0x7fdeff102422
+0x7fdeff102410: nop
+0x7fdeff102411: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102414: cmp eax, dword ptr [rbp-0xc]
+0x7fdeff102417: jnl 0x7fdeff1024d2
+0x7fdeff10241d: jmp 0x7fdeff102499
+0x7fdeff102422: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102425: cdqe 
+0x7fdeff102427: lea rdx, ptr [rax*4]
+0x7fdeff10242f: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102436: add rax, rdx
+0x7fdeff102439: mov eax, dword ptr [rax]
+0x7fdeff10243b: mov dword ptr [rbp-0x64], eax
+0x7fdeff10243e: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102441: cdqe 
+0x7fdeff102443: lea rdx, ptr [rax*4]
+0x7fdeff10244b: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102452: add rdx, rax
+0x7fdeff102455: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102458: cdqe 
+0x7fdeff10245a: lea rcx, ptr [rax*4]
+0x7fdeff102462: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102469: add rax, rcx
+0x7fdeff10246c: mov eax, dword ptr [rax]
+0x7fdeff10246e: mov dword ptr [rdx], eax
+0x7fdeff102470: mov eax, dword ptr [rbp-0x8]
+0x7fdeff102473: cdqe 
+0x7fdeff102475: lea rdx, ptr [rax*4]
+0x7fdeff10247d: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102484: add rdx, rax
+0x7fdeff102487: mov eax, dword ptr [rbp-0x64]
+0x7fdeff10248a: mov dword ptr [rdx], eax
+0x7fdeff10248c: add dword ptr [rbp-0x4], 0x1
+0x7fdeff102490: sub dword ptr [rbp-0x8], 0x1
+0x7fdeff102494: jmp 0x7fdeff102242
+0x7fdeff102499: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10249c: cdqe 
+0x7fdeff10249e: mov edx, dword ptr [rbp-0x30]
+0x7fdeff1024a1: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff1024a8: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1024ab: cdqe 
+0x7fdeff1024ad: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1024b0: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff1024b7: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1024ba: lea edx, ptr [rax+0x1]
+0x7fdeff1024bd: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1024c0: cdqe 
+0x7fdeff1024c2: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff1024c9: add dword ptr [rbp-0x14], 0x1
+0x7fdeff1024cd: jmp 0x7fdeff1028f7
+0x7fdeff1024d2: mov eax, dword ptr [rbp-0xc]
+0x7fdeff1024d5: mov edx, dword ptr [rbp-0x4]
+0x7fdeff1024d8: sub edx, eax
+0x7fdeff1024da: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1024dd: mov ecx, dword ptr [rbp-0xc]
+0x7fdeff1024e0: sub ecx, eax
+0x7fdeff1024e2: mov eax, ecx
+0x7fdeff1024e4: cmp edx, eax
+0x7fdeff1024e6: cmovle eax, edx
+0x7fdeff1024e9: mov dword ptr [rbp-0x40], eax
+0x7fdeff1024ec: mov eax, dword ptr [rbp-0x30]
+0x7fdeff1024ef: mov dword ptr [rbp-0x18], eax
+0x7fdeff1024f2: mov eax, dword ptr [rbp-0x40]
+0x7fdeff1024f5: mov edx, dword ptr [rbp-0x4]
+0x7fdeff1024f8: sub edx, eax
+0x7fdeff1024fa: mov eax, edx
+0x7fdeff1024fc: mov dword ptr [rbp-0x1c], eax
+0x7fdeff1024ff: mov eax, dword ptr [rbp-0x40]
+0x7fdeff102502: mov dword ptr [rbp-0x20], eax
+0x7fdeff102505: jmp 0x7fdeff102580
+0x7fdeff10250a: mov eax, dword ptr [rbp-0x18]
+0x7fdeff10250d: cdqe 
+0x7fdeff10250f: lea rdx, ptr [rax*4]
+0x7fdeff102517: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10251e: add rax, rdx
+0x7fdeff102521: mov eax, dword ptr [rax]
+0x7fdeff102523: mov dword ptr [rbp-0x4c], eax
+0x7fdeff102526: mov eax, dword ptr [rbp-0x18]
+0x7fdeff102529: cdqe 
+0x7fdeff10252b: lea rdx, ptr [rax*4]
+0x7fdeff102533: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10253a: add rdx, rax
+0x7fdeff10253d: mov eax, dword ptr [rbp-0x1c]
+0x7fdeff102540: cdqe 
+0x7fdeff102542: lea rcx, ptr [rax*4]
+0x7fdeff10254a: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102551: add rax, rcx
+0x7fdeff102554: mov eax, dword ptr [rax]
+0x7fdeff102556: mov dword ptr [rdx], eax
+0x7fdeff102558: mov eax, dword ptr [rbp-0x1c]
+0x7fdeff10255b: cdqe 
+0x7fdeff10255d: lea rdx, ptr [rax*4]
+0x7fdeff102565: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10256c: add rdx, rax
+0x7fdeff10256f: mov eax, dword ptr [rbp-0x4c]
+0x7fdeff102572: mov dword ptr [rdx], eax
+0x7fdeff102574: add dword ptr [rbp-0x18], 0x1
+0x7fdeff102578: add dword ptr [rbp-0x1c], 0x1
+0x7fdeff10257c: sub dword ptr [rbp-0x20], 0x1
+0x7fdeff102580: cmp dword ptr [rbp-0x20], 0x0
+0x7fdeff102584: jnle 0x7fdeff10250a
+0x7fdeff10258a: mov eax, dword ptr [rbp-0x8]
+0x7fdeff10258d: mov edx, dword ptr [rbp-0x10]
+0x7fdeff102590: sub edx, eax
+0x7fdeff102592: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102595: mov ecx, dword ptr [rbp-0x34]
+0x7fdeff102598: sub ecx, eax
+0x7fdeff10259a: mov eax, ecx
+0x7fdeff10259c: cmp edx, eax
+0x7fdeff10259e: cmovle eax, edx
+0x7fdeff1025a1: mov dword ptr [rbp-0x50], eax
+0x7fdeff1025a4: mov eax, dword ptr [rbp-0x4]
+0x7fdeff1025a7: mov dword ptr [rbp-0x24], eax
+0x7fdeff1025aa: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1025ad: mov edx, dword ptr [rbp-0x34]
+0x7fdeff1025b0: sub edx, eax
+0x7fdeff1025b2: mov eax, edx
+0x7fdeff1025b4: add eax, 0x1
+0x7fdeff1025b7: mov dword ptr [rbp-0x28], eax
+0x7fdeff1025ba: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1025bd: mov dword ptr [rbp-0x2c], eax
+0x7fdeff1025c0: jmp 0x7fdeff10263b
+0x7fdeff1025c5: mov eax, dword ptr [rbp-0x24]
+0x7fdeff1025c8: cdqe 
+0x7fdeff1025ca: lea rdx, ptr [rax*4]
+0x7fdeff1025d2: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1025d9: add rax, rdx
+0x7fdeff1025dc: mov eax, dword ptr [rax]
+0x7fdeff1025de: mov dword ptr [rbp-0x54], eax
+0x7fdeff1025e1: mov eax, dword ptr [rbp-0x24]
+0x7fdeff1025e4: cdqe 
+0x7fdeff1025e6: lea rdx, ptr [rax*4]
+0x7fdeff1025ee: mov rax, qword ptr [rbp-0x558]
+0x7fdeff1025f5: add rdx, rax
+0x7fdeff1025f8: mov eax, dword ptr [rbp-0x28]
+0x7fdeff1025fb: cdqe 
+0x7fdeff1025fd: lea rcx, ptr [rax*4]
+0x7fdeff102605: mov rax, qword ptr [rbp-0x558]
+0x7fdeff10260c: add rax, rcx
+0x7fdeff10260f: mov eax, dword ptr [rax]
+0x7fdeff102611: mov dword ptr [rdx], eax
+0x7fdeff102613: mov eax, dword ptr [rbp-0x28]
+0x7fdeff102616: cdqe 
+0x7fdeff102618: lea rdx, ptr [rax*4]
+0x7fdeff102620: mov rax, qword ptr [rbp-0x558]
+0x7fdeff102627: add rdx, rax
+0x7fdeff10262a: mov eax, dword ptr [rbp-0x54]
+0x7fdeff10262d: mov dword ptr [rdx], eax
+0x7fdeff10262f: add dword ptr [rbp-0x24], 0x1
+0x7fdeff102633: add dword ptr [rbp-0x28], 0x1
+0x7fdeff102637: sub dword ptr [rbp-0x2c], 0x1
+0x7fdeff10263b: cmp dword ptr [rbp-0x2c], 0x0
+0x7fdeff10263f: jnle 0x7fdeff1025c5
+0x7fdeff102645: mov eax, dword ptr [rbp-0x4]
+0x7fdeff102648: mov edx, dword ptr [rbp-0x30]
+0x7fdeff10264b: add eax, edx
+0x7fdeff10264d: sub eax, dword ptr [rbp-0xc]
+0x7fdeff102650: sub eax, 0x1
+0x7fdeff102653: mov dword ptr [rbp-0x40], eax
+0x7fdeff102656: mov eax, dword ptr [rbp-0x10]
+0x7fdeff102659: mov edx, dword ptr [rbp-0x8]
+0x7fdeff10265c: sub edx, eax
+0x7fdeff10265e: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102661: add eax, edx
+0x7fdeff102663: add eax, 0x1
+0x7fdeff102666: mov dword ptr [rbp-0x50], eax
+0x7fdeff102669: mov eax, dword ptr [rbp-0x30]
+0x7fdeff10266c: mov dword ptr [rbp-0x530], eax
+0x7fdeff102672: mov eax, dword ptr [rbp-0x40]
+0x7fdeff102675: mov dword ptr [rbp-0x540], eax
+0x7fdeff10267b: mov eax, dword ptr [rbp-0x38]
+0x7fdeff10267e: mov dword ptr [rbp-0x550], eax
+0x7fdeff102684: mov eax, dword ptr [rbp-0x50]
+0x7fdeff102687: mov dword ptr [rbp-0x52c], eax
+0x7fdeff10268d: mov eax, dword ptr [rbp-0x34]
+0x7fdeff102690: mov dword ptr [rbp-0x53c], eax
+0x7fdeff102696: mov eax, dword ptr [rbp-0x38]
+0x7fdeff102699: mov dword ptr [rbp-0x54c], eax
+0x7fdeff10269f: mov eax, dword ptr [rbp-0x40]
+0x7fdeff1026a2: add eax, 0x1
+0x7fdeff1026a5: mov dword ptr [rbp-0x528], eax
+0x7fdeff1026ab: mov eax, dword ptr [rbp-0x50]
+0x7fdeff1026ae: sub eax, 0x1
+0x7fdeff1026b1: mov dword ptr [rbp-0x538], eax
+0x7fdeff1026b7: mov eax, dword ptr [rbp-0x38]
+0x7fdeff1026ba: add eax, 0x1
+0x7fdeff1026bd: mov dword ptr [rbp-0x548], eax
+0x7fdeff1026c3: mov edx, dword ptr [rbp-0x540]
+0x7fdeff1026c9: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1026cf: mov ecx, edx
+0x7fdeff1026d1: sub ecx, eax
+0x7fdeff1026d3: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff1026d9: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1026df: sub edx, eax
+0x7fdeff1026e1: mov eax, edx
+0x7fdeff1026e3: cmp ecx, eax
+0x7fdeff1026e5: jnl 0x7fdeff102745
+0x7fdeff1026eb: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1026f1: mov dword ptr [rbp-0x58], eax
+0x7fdeff1026f4: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1026fa: mov dword ptr [rbp-0x530], eax
+0x7fdeff102700: mov eax, dword ptr [rbp-0x58]
+0x7fdeff102703: mov dword ptr [rbp-0x52c], eax
+0x7fdeff102709: mov eax, dword ptr [rbp-0x540]
+0x7fdeff10270f: mov dword ptr [rbp-0x58], eax
+0x7fdeff102712: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff102718: mov dword ptr [rbp-0x540], eax
+0x7fdeff10271e: mov eax, dword ptr [rbp-0x58]
+0x7fdeff102721: mov dword ptr [rbp-0x53c], eax
+0x7fdeff102727: mov eax, dword ptr [rbp-0x550]
+0x7fdeff10272d: mov dword ptr [rbp-0x58], eax
+0x7fdeff102730: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff102736: mov dword ptr [rbp-0x550], eax
+0x7fdeff10273c: mov eax, dword ptr [rbp-0x58]
+0x7fdeff10273f: mov dword ptr [rbp-0x54c], eax
+0x7fdeff102745: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff10274b: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff102751: mov ecx, edx
+0x7fdeff102753: sub ecx, eax
+0x7fdeff102755: mov edx, dword ptr [rbp-0x538]
+0x7fdeff10275b: mov eax, dword ptr [rbp-0x528]
+0x7fdeff102761: sub edx, eax
+0x7fdeff102763: mov eax, edx
+0x7fdeff102765: cmp ecx, eax
+0x7fdeff102767: jnl 0x7fdeff1027c7
+0x7fdeff10276d: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff102773: mov dword ptr [rbp-0x5c], eax
+0x7fdeff102776: mov eax, dword ptr [rbp-0x528]
+0x7fdeff10277c: mov dword ptr [rbp-0x52c], eax
+0x7fdeff102782: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff102785: mov dword ptr [rbp-0x528], eax
+0x7fdeff10278b: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff102791: mov dword ptr [rbp-0x5c], eax
+0x7fdeff102794: mov eax, dword ptr [rbp-0x538]
+0x7fdeff10279a: mov dword ptr [rbp-0x53c], eax
+0x7fdeff1027a0: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff1027a3: mov dword ptr [rbp-0x538], eax
+0x7fdeff1027a9: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff1027af: mov dword ptr [rbp-0x5c], eax
+0x7fdeff1027b2: mov eax, dword ptr [rbp-0x548]
+0x7fdeff1027b8: mov dword ptr [rbp-0x54c], eax
+0x7fdeff1027be: mov eax, dword ptr [rbp-0x5c]
+0x7fdeff1027c1: mov dword ptr [rbp-0x548], eax
+0x7fdeff1027c7: mov edx, dword ptr [rbp-0x540]
+0x7fdeff1027cd: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1027d3: mov ecx, edx
+0x7fdeff1027d5: sub ecx, eax
+0x7fdeff1027d7: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff1027dd: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1027e3: sub edx, eax
+0x7fdeff1027e5: mov eax, edx
+0x7fdeff1027e7: cmp ecx, eax
+0x7fdeff1027e9: jnl 0x7fdeff102849
+0x7fdeff1027ef: mov eax, dword ptr [rbp-0x530]
+0x7fdeff1027f5: mov dword ptr [rbp-0x60], eax
+0x7fdeff1027f8: mov eax, dword ptr [rbp-0x52c]
+0x7fdeff1027fe: mov dword ptr [rbp-0x530], eax
+0x7fdeff102804: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102807: mov dword ptr [rbp-0x52c], eax
+0x7fdeff10280d: mov eax, dword ptr [rbp-0x540]
+0x7fdeff102813: mov dword ptr [rbp-0x60], eax
+0x7fdeff102816: mov eax, dword ptr [rbp-0x53c]
+0x7fdeff10281c: mov dword ptr [rbp-0x540], eax
+0x7fdeff102822: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102825: mov dword ptr [rbp-0x53c], eax
+0x7fdeff10282b: mov eax, dword ptr [rbp-0x550]
+0x7fdeff102831: mov dword ptr [rbp-0x60], eax
+0x7fdeff102834: mov eax, dword ptr [rbp-0x54c]
+0x7fdeff10283a: mov dword ptr [rbp-0x550], eax
+0x7fdeff102840: mov eax, dword ptr [rbp-0x60]
+0x7fdeff102843: mov dword ptr [rbp-0x54c], eax
+0x7fdeff102849: mov edx, dword ptr [rbp-0x530]
+0x7fdeff10284f: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102852: cdqe 
+0x7fdeff102854: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff10285b: mov edx, dword ptr [rbp-0x540]
+0x7fdeff102861: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102864: cdqe 
+0x7fdeff102866: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff10286d: mov edx, dword ptr [rbp-0x550]
+0x7fdeff102873: mov eax, dword ptr [rbp-0x14]
+0x7fdeff102876: cdqe 
+0x7fdeff102878: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff10287f: add dword ptr [rbp-0x14], 0x1
+0x7fdeff102883: mov edx, dword ptr [rbp-0x52c]
+0x7fdeff102889: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10288c: cdqe 
+0x7fdeff10288e: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff102895: mov edx, dword ptr [rbp-0x53c]
+0x7fdeff10289b: mov eax, dword ptr [rbp-0x14]
+0x7fdeff10289e: cdqe 
+0x7fdeff1028a0: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff1028a7: mov edx, dword ptr [rbp-0x54c]
+0x7fdeff1028ad: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1028b0: cdqe 
+0x7fdeff1028b2: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff1028b9: add dword ptr [rbp-0x14], 0x1
+0x7fdeff1028bd: mov edx, dword ptr [rbp-0x528]
+0x7fdeff1028c3: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1028c6: cdqe 
+0x7fdeff1028c8: mov dword ptr [rbp+rax*4-0x200], edx
+0x7fdeff1028cf: mov edx, dword ptr [rbp-0x538]
+0x7fdeff1028d5: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1028d8: cdqe 
+0x7fdeff1028da: mov dword ptr [rbp+rax*4-0x390], edx
+0x7fdeff1028e1: mov edx, dword ptr [rbp-0x548]
+0x7fdeff1028e7: mov eax, dword ptr [rbp-0x14]
+0x7fdeff1028ea: cdqe 
+0x7fdeff1028ec: mov dword ptr [rbp+rax*4-0x520], edx
+0x7fdeff1028f3: add dword ptr [rbp-0x14], 0x1
+0x7fdeff1028f7: cmp dword ptr [rbp-0x14], 0x0
+0x7fdeff1028fb: jnle 0x7fdeff102077
+0x7fdeff102901: leave 
+0x7fdeff102902: ret 
+0x402bdd: jmp qword ptr [rip+0x1941d]
+after commit translated routines

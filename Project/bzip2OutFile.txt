@@ -1,0 +1,21 @@
+after memory allocation
+Inlining 0x4227406
+Inlining 0x4205533
+Inlining 0x4205447
+Inlining 0x4204589
+after identifying candidate routines
+after calculate direct br targets
+FDBCTOA: 28
+0x7f5888a2401a: jnz 0x7f5888a241ca
+after memory allocation
+Inlining 0x4227406
+Inlining 0x4205533
+Inlining 0x4205447
+Inlining 0x4204589
+after identifying candidate routines
+after calculate direct br targets
+here
+
+
+FDBCTOA: 28
+0x7f792df9201a: jnz 0x7f792df921ca

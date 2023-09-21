@@ -894,7 +894,6 @@ int find_candidate_rtns_for_translation(IMG img)
         //RTN calleeRtn = RTN_FindByAddress(calleeAddress);
         //RTN callerRtn = RTN_FindByAddress(callerAddress);
 
-
         RTN_Open(callerRtn);
         translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(callerRtn);
         translated_rtn[translated_rtn_num].rtn_size = RTN_Size(callerRtn);
