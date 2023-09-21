@@ -758,6 +758,14 @@ int fix_instructions_displacements()
    return 0;
  }
 
+bool isForwardJump(INS ins)
+{
+    ADDRINT sourceAddress = INS_Address(ins);
+    ADDRINT targetAddress = INS_DirectControlFlowTargetAddress(ins);
+    //cout << "comparing 0x" << hex << sourceAddress << " and 0x" << targetAddress << ", delta is " << (targetAddress - sourceAddress) << endl;
+    return targetAddress > sourceAddress;
+}
+
 bool canInlineCallee(ADDRINT calleeAddress)
 {
     RTN rtn = RTN_FindByAddress(calleeAddress);
@@ -766,7 +774,7 @@ bool canInlineCallee(ADDRINT calleeAddress)
     RTN_Open(rtn);
     if (!INS_IsRet(RTN_InsTail(rtn)) || calleeAddress != INS_Address(RTN_InsHead(rtn)))
     {
-        cout << "Not inlining 0x" << calleeAddress << endl;
+        cout << "Not inlining 0x" << calleeAddress << ", does end in ret or does not jump to head of rtn" << endl;
         RTN_Close(rtn);
         return false;
     }
@@ -778,7 +786,16 @@ bool canInlineCallee(ADDRINT calleeAddress)
         //bool invalid = (retCount > 1) /* || (INS_IsIndirectControlFlow(ins)) */;
         if( (retCount > 1) /*|| (INS_IsIndirectControlFlow(ins)) */)
         {
-            cout << "Not inlining 0x" << calleeAddress << endl;
+            cout << "Not inlining 0x" << calleeAddress << ", contains more than one ret" << endl;
+            RTN_Close(rtn);
+            return false;
+        }
+        if (!INS_IsBranch(ins))
+            continue;
+        //look for positive forward jumps
+        if (isForwardJump(ins))
+        {
+            cout << "Not inlining 0x" << calleeAddress << ", contains forward jumps" << endl;
             RTN_Close(rtn);
             return false;
         }
@@ -842,17 +859,13 @@ int find_candidate_rtns_for_translation(IMG img)
 
         ADDRINT calleeAddress = p.first;
         ADDRINT callerAddress = p.second;
-        cout << "callee is 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller is 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
+        //cout << "callee is 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller is 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
         if (!canInlineCallee(calleeAddress))
             continue;
         RTN calleeRtn = RTN_FindByAddress(calleeAddress);
         RTN callerRtn = RTN_FindByAddress(callerAddress);
         string calleeName = RTN_Name(calleeRtn);
         string callerName = RTN_Name(callerRtn);
-        if (calleeName == "copy_input_until_stop" || calleeName == "mainSort" || calleeName == "mainQSort3")
-            continue;
-        if (callerName == "copy_input_until_stop" || callerName == "mainSort" || callerName == "mainQSort3")
-            continue;
 
         cout << "Inlining 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << endl;
         //RTN calleeRtn = RTN_FindByAddress(calleeAddress);
@@ -1522,8 +1535,8 @@ int initInlineData()
             parses.clear();
             continue;
         }
-        cout << "parses[0]: " << parses[0] << endl;
-        cout << "parses[1]: " << parses[1] << endl;
+        //cout << "parses[0]: " << parses[0] << endl;
+        //cout << "parses[1]: " << parses[1] << endl;
         ADDRINT calleeAddress = stoull(parses[0], nullptr, 16);
         ADDRINT callerAddress = stoull(parses[1], nullptr, 16);
         //cout << "callee address: 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller address: 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
