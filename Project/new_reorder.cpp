@@ -895,6 +895,55 @@ int find_candidate_rtns_for_translation(IMG img)
 
     /// FIXME: add jump to fallthrough after last ins!!
 
+    ADDRINT addr = INS_Address(ins);
+            xed_error_enum_t xed_error;
+            unsigned int max_size = XED_MAX_INSTRUCTION_BYTES;
+            unsigned int new_size = 0;
+            xed_decoded_inst_t xedd2;
+            // xed_error_enum_t xed_code;
+
+            xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
+            xed_uint8_t enc_buf2[XED_MAX_INSTRUCTION_BYTES];		
+            // xed_int32_t disp = xed_decoded_inst_get_branch_displacement(xedd);
+            xed_encoder_instruction_t  enc_instr;
+
+            xed_inst1(&enc_instr, dstate, 
+                    XED_ICLASS_JMP, 64,
+                    // xed_mem_bd (XED_REG_RIP, xed_disp(new_disp, 32), 64));
+                    xed_relbr(0, 32)); // create the branch command. relative to something.
+                    // xed_relbr(-1 * disp, 32)); // create the branch command. relative to something.
+                                    
+            xed_encoder_request_t enc_req;
+
+            xed_encoder_request_zero_set_mode(&enc_req, &dstate);
+            xed_bool_t convert_ok = xed_convert_to_encoder_request(&enc_req, &enc_instr);
+            if (!convert_ok) {
+                cerr << "conversion to encode request failed" << endl;
+                continue;
+            }
+            // xed_encoder_request_set_uimm0_bits(&enc_req, currEdge.destination, 32);
+            xed_error = xed_encode (&enc_req, enc_buf2, max_size, &new_size);
+            if (xed_error != XED_ERROR_NONE) {
+                cerr << "ENCODE ERROR: " << xed_error_enum_t2str(xed_error) << endl;				
+                continue;
+            }		
+
+
+            // create a decoded xed object to be added to localInsVector
+            xed_decoded_inst_zero_set_mode(&xedd2, &dstate);
+            xed_code = xed_decode(&xedd2, enc_buf2, max_inst_len);
+            if (xed_code != XED_ERROR_NONE) {
+                cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
+                translated_rtn[translated_rtn_num].instr_map_entry = -1;
+                break;
+            }
+            char buf[2048];
+            xed_format_context(XED_SYNTAX_INTEL, &xedd2, buf, 2048, INS_Address(ins), 0, 0);
+            cerr << "finish bbl add uncond jump: " << hex << INS_Address(ins) << " " << buf << endl << endl;
+            // Save xed and addr into a map to be used later.
+            pair<ADDRINT, xed_decoded_inst_t> new_jump(addr, xedd2); 
+            localInsVector.push_back(new_jump);
+
 
     // USIZE extraSize = 0;
     // add all blocks, by order

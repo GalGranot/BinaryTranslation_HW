@@ -197,6 +197,7 @@ public:
 vector<Edge> rtnReorderVector;
 translated_rtn_t *translated_rtn;
 int translated_rtn_num = 0;
+int rtn_num = 0;
 
 ofstream outFile;
 ifstream chosenRtnFile;
@@ -887,55 +888,11 @@ int find_candidate_rtns_for_translation(IMG img)
     //local_instrs_map.clear();
 
     // go over routines and check if they are candidates for translation and mark them for translation:
-    int i = 0;
+    int gal = 0;
     for (const auto& p : calleeCallers)
     {
-        /*
-        ADDRINT calleeAddress;;
-        ADDRINT callerAddress;
-        if (i == 0) 
-        {
-            calleeAddress = 0x408422;
-            callerAddress = 0x408960;
-        }
-        if (i == 1)
-        {
-            calleeAddress = 0x402b87;
-            callerAddress = 0x402d92;
-        }
-        //if (i == 2)
-        //{
-        //    calleeAddress = 0x400dc0;
-        //    callerAddress = 0x404834;
-        //}
-        if (i == 2)
-        {
-            calleeAddress = 0x4046c7;
-            callerAddress = 0x4047bf;
-        }
-        //if (i == 3)
-        //{
-        //    calleeAddress = 0x40abbf;
-        //    callerAddress = 0x404872;
-        //}
-        //if (i == 5)
-        //{
-        //    calleeAddress = 0x400ed0;
-        //    callerAddress = 0x4046fb;
-        //}
-        i++;
-        //pair<ADDRINT, ADDRINT> p = calleeCallers[i];
-        //ADDRINT calleeAddress = p.first;
-        //ADDRINT callerAddress = p.second;
-        //cout << "starting rtn. callee address: 0x" << calleeAddress << ", caller address: 0x" << callerAddress << endl;
-        */
-
-        //ADDRINT calleeAddress = p.first;
-        //ADDRINT callerAddress = p.second;
-        //cout << "callee is 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller is 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
-        //if (!canInlineCallee(calleeAddress))
-        //    continue;
-        if (i++ > 0)
+        
+        if (gal++ > 0)
             break;
         ADDRINT calleeAddress = p.first;
         calleeAddress = 0x402b87;
@@ -946,7 +903,7 @@ int find_candidate_rtns_for_translation(IMG img)
         string calleeName = RTN_Name(calleeRtn);
         string callerName = RTN_Name(callerRtn);
 
-        cout << "Inlining 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << " in 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
+        // cout << "Inlining 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << " in 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
         //RTN calleeRtn = RTN_FindByAddress(calleeAddress);
         //RTN callerRtn = RTN_FindByAddress(callerAddress);
 
@@ -1084,7 +1041,7 @@ int find_candidate_rtns_for_translation(IMG img)
     }
 
     // Go over the local_instrs_map map and add each instruction to the instr_map:
-    int rtn_num = 0;
+    // int rtn_num = 0;
 
     //for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
     for (unsigned int i = 0; i < localInsVector.size(); i++)
@@ -1166,14 +1123,14 @@ inline void commit_translated_routines()
     // Commit the translated functions: 
     // Go over the candidate functions and replace the original ones by their new successfully translated ones:
 
-    cout << "translated rtn num is " << translated_rtn_num << endl;
+    // cout << "translated rtn num is " << translated_rtn_num << endl;
 
     for (int i=0; i < translated_rtn_num; i++) {
 
         //replace function by new function in tc
     
         if (translated_rtn[i].instr_map_entry >= 0) {
-                    
+            //  cout << "translated rtn num is " << translated_rtn_num << " rtn name is " << RTN_Name(RTN_FindByAddress(translated_rtn[i].rtn_addr)) << " is safe " << translated_rtn[i].isSafeForReplacedProbe << endl;
             if (translated_rtn[i].rtn_size > MAX_PROBE_JUMP_INSTR_BYTES && translated_rtn[i].isSafeForReplacedProbe) {                        
 
                 RTN rtn = RTN_FindByAddress(translated_rtn[i].rtn_addr);
@@ -1411,9 +1368,9 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
         cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << addr << endl;
         translated_rtn[translated_rtn_num].instr_map_entry = -1;
     }
-    char buf[2048];
-    xed_format_context(XED_SYNTAX_INTEL, &xedd2, buf, 2048, INS_Address(ins), 0, 0);
-    cerr << "finish bbl add uncond jump: " << hex << INS_Address(ins) << " " << buf << endl << endl;
+    // char buf[2048];
+    // xed_format_context(XED_SYNTAX_INTEL, &xedd2, buf, 2048, INS_Address(ins), 0, 0);
+    // cerr << "finish bbl add uncond jump: " << hex << INS_Address(ins) << " " << buf << endl << endl;
     // Save xed and addr into a map to be used later.
     pair<ADDRINT, xed_decoded_inst_t> new_jump(addr, xedd2);
     localInsVector.push_back(new_jump);
@@ -1469,10 +1426,10 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
 
         // handle last ins!!
         INS ins_tail = bblIns;
-        xed_decoded_inst_t* orig_xedd = INS_XedDec(ins_tail);
+        xed_decoded_inst_t* orig_xedd = INS_XedDec(bblIns);
         xed_category_enum_t category_enum = xed_decoded_inst_get_category(orig_xedd);
-        xed_int32_t disp = xed_decoded_inst_get_branch_displacement(orig_xedd);
-        cout << "disp: " << disp << endl;
+        // xed_int32_t disp = xed_decoded_inst_get_branch_displacement(orig_xedd);
+        // cout << "disp: " << disp << endl;
 
         if (INS_IsBranch(bblIns) && (category_enum == XED_CATEGORY_COND_BR))
         {
@@ -1565,7 +1522,7 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
 
                 // set the reverted opcode;
                 xed_encoder_request_set_iclass(orig_xedd, retverted_iclass);
-                xed_encoder_request_set_branch_displacement(orig_xedd, -4, 4);
+                // xed_encoder_request_set_branch_displacement(orig_xedd, -4, 4);
 
                 xed_uint8_t enc_buf[XED_MAX_INSTRUCTION_BYTES];
                 unsigned int max_size = XED_MAX_INSTRUCTION_BYTES;
@@ -1612,38 +1569,38 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
 
                 //print the original and the new reverted cond instructions:
                 //
-                cerr << "orig instr:              " << hex << INS_Address(ins_tail) << " " << INS_Disassemble(ins_tail) << endl;
+                // cerr << "orig instr:              " << hex << INS_Address(bblIns) << " " << INS_Disassemble(bblIns) << endl;
 
-                char buf[2048];
+                // char buf[2048];
                 xed_decoded_inst_t new_xedd;
                 xed_decoded_inst_zero_set_mode(&new_xedd, &dstate);
 
                 xed_error_enum_t xed_code = xed_decode(&new_xedd, enc_buf, XED_MAX_INSTRUCTION_BYTES);
                 if (xed_code != XED_ERROR_NONE) {
+                    cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << INS_Address(bblIns) << endl;
+                    continue;
+                }
+
+                // xed_format_context(XED_SYNTAX_INTEL, &new_xedd, buf, 2048, INS_Address(bblIns), 0, 0);
+                // cerr << "reverted cond jump:      " << hex << INS_Address(bblIns) << " " << buf << endl;
+
+                xed_decoded_inst_zero_set_mode(&new_xedd,&dstate);
+                xed_code = xed_decode(&new_xedd, enc_buf2, XED_MAX_INSTRUCTION_BYTES);
+                if (xed_code != XED_ERROR_NONE) {
                     cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << INS_Address(ins_tail) << endl;
                     continue;
                 }
 
-                xed_format_context(XED_SYNTAX_INTEL, &new_xedd, buf, 2048, INS_Address(ins_tail), 0, 0);
-                cerr << "reverted cond jump:      " << hex << INS_Address(ins_tail) << " " << buf << endl;
+                // xed_format_context(XED_SYNTAX_INTEL, &new_xedd, buf, 2048, INS_Address(bblIns), 0, 0);
+                // cerr << "newly added cond jump: " << hex << INS_Address(bblIns) << " " << buf << endl << endl;
 
-                // xed_decoded_inst_zero_set_mode(&new_xedd,&dstate);
-                // xed_code = xed_decode(&new_xedd, enc_buf2, XED_MAX_INSTRUCTION_BYTES);
-                // if (xed_code != XED_ERROR_NONE) {
-                //     cerr << "ERROR: xed decode failed for instr at: " << "0x" << hex << INS_Address(ins_tail) << endl;
-                //     continue;
-                // }
-
-                xed_format_context(XED_SYNTAX_INTEL, &new_xedd, buf, 2048, INS_Address(ins_tail), 0, 0);
-                cerr << "newly added cond jump: " << hex << INS_Address(ins_tail) << " " << buf << endl << endl;
-
-                pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(ins_tail), new_xedd);
-                // pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(ins_tail), *orig_xedd);
+                pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(bblIns), new_xedd);
+                // pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(bblIns), *orig_xedd);
                 localInsVector.push_back(p);
             }
             else // put original jump, because it shouldnt be reverted
             {
-                pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(ins_tail), *orig_xedd);
+                pair<ADDRINT, xed_decoded_inst_t> p(INS_Address(bblIns), *orig_xedd);
                 localInsVector.push_back(p);
             }
         }
@@ -1706,7 +1663,7 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
             xed_inst1(&enc_instr, dstate,
                 XED_ICLASS_JMP, 64,
                 // xed_mem_bd (XED_REG_RIP, xed_disp(new_disp, 32), 64));
-                xed_relbr(0, 32)); // create the branch command. relative to something.
+                xed_relbr(2, 32)); // create the branch command. relative to something.
             // xed_relbr(-1 * disp, 32)); // create the branch command. relative to something.
 
             xed_encoder_request_t enc_req;
@@ -1733,9 +1690,9 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
                 translated_rtn[translated_rtn_num].instr_map_entry = -1;
                 break;
             }
-            char buf[2048];
-            xed_format_context(XED_SYNTAX_INTEL, &xedd2, buf, 2048, INS_Address(ins_tail), 0, 0);
-            cerr << "finish bbl add uncond jump: " << hex << INS_Address(ins_tail) << " " << buf << endl << endl;
+            // char buf[2048];
+            // xed_format_context(XED_SYNTAX_INTEL, &xedd2, buf, 2048, INS_Address(ins_tail), 0, 0);
+            // cerr << "finish bbl add uncond jump: " << hex << INS_Address(ins_tail) << " " << buf << endl << endl;
             // Save xed and addr into a map to be used later.
             pair<ADDRINT, xed_decoded_inst_t> new_jump(addr, xedd2);
             localInsVector.push_back(new_jump);
@@ -1816,7 +1773,7 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
 
 
     // Go over the local_instrs_map map and add each instruction to the instr_map:
-    int rtn_num = 0;
+    // int rtn_num = 0;
 
     //for (map<ADDRINT, xed_decoded_inst_t>::iterator iter = local_instrs_map.begin(); iter != local_instrs_map.end(); iter++) {
     for (unsigned int i = 0; i < localInsVector.size(); i++)
@@ -1901,6 +1858,8 @@ VOID ImageLoad(IMG img, VOID *v)
     if (rc < 0)
         return;
     cout << "after identifying candidate routines for reorder" << endl;
+
+
     
     // Step 3: Chaining - calculate direct branch and call instructions to point to corresponding target instr entries:
     rc = chain_all_direct_br_and_call_target_entries();
