@@ -306,9 +306,9 @@ void dump_entire_instr_map()
                 RTN rtn = RTN_FindByAddress(translated_rtn[j].rtn_addr);
 
                 if (rtn == RTN_Invalid()) {
-                    cerr << "Unknwon"  << ":" << endl;
+                    cout << "Unknwon"  << ":" << endl;
                 } else {
-                  cerr << RTN_Name(rtn) << ":" << endl;
+                  cout << RTN_Name(rtn) << ":" << endl;
                 }
             }
         }
@@ -1166,6 +1166,8 @@ inline void commit_translated_routines()
     // Commit the translated functions: 
     // Go over the candidate functions and replace the original ones by their new successfully translated ones:
 
+    cout << "translated rtn num is " << translated_rtn_num << endl;
+
     for (int i=0; i < translated_rtn_num; i++) {
 
         //replace function by new function in tc
@@ -1385,7 +1387,7 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
     xed_inst1(&enc_instr, dstate,
         XED_ICLASS_JMP, 64,
         // xed_mem_bd (XED_REG_RIP, xed_disp(new_disp, 32), 64));
-        xed_relbr(2, 32)); // create the branch command. relative to something.
+        xed_relbr(0, 32)); // create the branch command. relative to something.
     // xed_relbr(-1 * disp, 32)); // create the branch command. relative to something.
 
     xed_encoder_request_t enc_req;
@@ -1704,7 +1706,7 @@ int find_candidate_rtns_for_translation_reorder(IMG img)
             xed_inst1(&enc_instr, dstate,
                 XED_ICLASS_JMP, 64,
                 // xed_mem_bd (XED_REG_RIP, xed_disp(new_disp, 32), 64));
-                xed_relbr(2, 32)); // create the branch command. relative to something.
+                xed_relbr(0, 32)); // create the branch command. relative to something.
             // xed_relbr(-1 * disp, 32)); // create the branch command. relative to something.
 
             xed_encoder_request_t enc_req;
