@@ -509,8 +509,7 @@ int fix_direct_br_call_to_orig_addr(int instr_map_entry)
     }
     
     xed_category_enum_t category_enum = xed_decoded_inst_get_category(&xedd);
-    
-    if (category_enum != XED_CATEGORY_CALL && category_enum != XED_CATEGORY_UNCOND_BR) {
+    if (category_enum != XED_CATEGORY_CALL && category_enum != XED_CATEGORY_UNCOND_BR/* && category_enum != XED_CATEGORY_COND_BR*/) {
 
         cerr << "ERROR: Invalid direct jump from translated code to original code in rotuine: " 
               << RTN_Name(RTN_FindByAddress(instr_map[instr_map_entry].orig_ins_addr)) << endl;
@@ -841,19 +840,23 @@ int find_candidate_rtns_for_translation(IMG img)
         //cout << "starting rtn. callee address: 0x" << calleeAddress << ", caller address: 0x" << callerAddress << endl;
         */
 
-        //ADDRINT calleeAddress = p.first;
-        //if (!canInlineCallee(calleeAddress))
-        //    continue;
-        //ADDRINT callerAddress = p.second;
-        //cout << "Inlining 0x" << calleeAddress << endl;
-
-        ADDRINT x = p.first;
-        x++;
-        ADDRINT calleeAddress = 0x408422;
-        ADDRINT callerAddress = 0x408960;
+        ADDRINT calleeAddress = p.first;
+        ADDRINT callerAddress = p.second;
+        cout << "callee is 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller is 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
+        if (!canInlineCallee(calleeAddress))
+            continue;
         RTN calleeRtn = RTN_FindByAddress(calleeAddress);
         RTN callerRtn = RTN_FindByAddress(callerAddress);
+        string calleeName = RTN_Name(calleeRtn);
+        string callerName = RTN_Name(callerRtn);
+        if (calleeName == "copy_input_until_stop" || calleeName == "mainSort" || calleeName == "mainQSort3")
+            continue;
+        if (callerName == "copy_input_until_stop" || callerName == "mainSort" || callerName == "mainQSort3")
+            continue;
 
+        cout << "Inlining 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << endl;
+        //RTN calleeRtn = RTN_FindByAddress(calleeAddress);
+        //RTN callerRtn = RTN_FindByAddress(callerAddress);
         RTN_Open(callerRtn);
         translated_rtn[translated_rtn_num].rtn_addr = RTN_Address(callerRtn);
         translated_rtn[translated_rtn_num].rtn_size = RTN_Size(callerRtn);
@@ -950,6 +953,7 @@ int find_candidate_rtns_for_translation(IMG img)
                 if (INS_IsRet(insInline))
                     continue;
                 ADDRINT addr = INS_Address(insInline);
+                
 
                 //debug print of orig instruction:
                 if (KnobVerbose) {
@@ -957,10 +961,8 @@ int find_candidate_rtns_for_translation(IMG img)
                     cerr << "0x" << hex << INS_Address(insInline) << ": " << INS_Disassemble(insInline) << endl;
                     //xed_print_hex_line(reinterpret_cast<UINT8*>(INS_Address (ins)), INS_Size(ins));                               
                 }
-
                 xed_decoded_inst_t xedd;
                 xed_error_enum_t xed_code;
-
                 xed_decoded_inst_zero_set_mode(&xedd, &dstate);
 
                 xed_code = xed_decode(&xedd, reinterpret_cast<UINT8*>(addr), max_inst_len);
@@ -974,8 +976,11 @@ int find_candidate_rtns_for_translation(IMG img)
                 pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
                 localInsVector.push_back(p);
                 //local_instrs_map[addr] = xedd;
+                if (addr == 0x40843c)
+                {
+                    cout << "in problematic ins" << endl;
+                }
             }
-
             RTN_Close(calleeRtn);
             RTN_Open(callerRtn);
         }
@@ -1318,11 +1323,10 @@ VOID ImageLoad(IMG img, VOID *v)
 
 VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
 {
-    //cerr<< "started printTargetCallees" << endl;
     for (const auto& pair : Map)
     {
         const rtnData& callee = pair.second;
-        if (callee.callNum < threshold) // if rtn wasn't called at all
+        if (callee.callNum < threshold)
             continue;
         //outFile << hex 
         //        /*<< "0x" */<< callee.rtnAddr << "," 
@@ -1337,7 +1341,6 @@ VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
         //                /*<< "0x" */<< caller2Num.first << dec << "," << caller2Num.second << ",";
         //    }
         //}
-
         outFile << hex
             /*<< "0x" */ << callee.rtnAddr << ","
             /*<< dec << callee.rtnInsNum << "," << callee.callNum << ","*/;
@@ -1363,25 +1366,8 @@ VOID doCountRtn(ADDRINT callerAddr, VOID* address)
     (rtnDataPtr->callers2callNumMap)[callerAddr]++;
 }
 
-bool canInlineRtn(RTN rtn, RTN sourceRtn)
-{
-    RTN_Close(sourceRtn);
-    RTN_Open(rtn);
-    if (!RTN_Valid(rtn))
-    {
-        RTN_Close(rtn);
-        RTN_Open(sourceRtn);
-        return false;
-    }
-    RTN_Close(rtn);
-    RTN_Open(sourceRtn);
-    return true;
-}
-
-
 VOID ImageForProf(IMG img, VOID* v)
 {
-    vector<RTN> inlineCandidates;
     if (!IMG_Valid(img) || !IMG_IsMainExecutable(img))
         return;
     
@@ -1409,8 +1395,6 @@ VOID ImageForProf(IMG img, VOID* v)
                     continue;
                 }
                 //check inline conditions
-                RTN calleeRtn = RTN_FindByAddress(calleeAddr);
-                inlineCandidates.push_back(calleeRtn);
                 if (allRtnMap.find(calleeAddr) == allRtnMap.end()) // rtn not in map yet
                     allRtnMap[calleeAddr] = rtnData(calleeAddr, 0, rtnSize); // add rtn to the map.
                 INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)doCountRtn, IARG_ADDRINT, insAddr, IARG_PTR, &(allRtnMap[calleeAddr]), IARG_END);
@@ -1421,36 +1405,6 @@ VOID ImageForProf(IMG img, VOID* v)
             RTN_Close(rtn);
         } // rtn
     } //sec
-
-    //trying to profile here
-    //for (const auto& rtn : inlineCandidates)
-    //{
-    //    if (!RTN_Valid(rtn))
-    //        break;
-    //    cout << "1" << endl;
-    //    RTN_Open(rtn);
-    //    cout << "2" << endl;
-    //    ADDRINT rtnAddress = RTN_Address(rtn);
-    //    cout << "3" << endl;
-    //    //INS rtnHead = RTN_InsHead(rtn);
-    //    INS rtnTail = RTN_InsTail(rtn);
-    //    cout << "4" << endl;
-    //    if (!INS_IsRet(rtnTail))
-    //    {
-    //        cout << "5" << endl;
-    //        allRtnMap.erase(rtnAddress);
-    //        RTN_Close(rtn);
-    //        continue;
-    //    }
-    //    cout << "6" << endl;
-    //    for (INS ins = RTN_InsHead(rtn); INS_Valid(ins); ins = INS_Next(ins))
-    //    {
-    //        ;//cout << "in" << endl;
-    //    }
-    //    cout << "7" << endl;
-    //    RTN_Close(rtn);
-    //    cout << "8" << endl;
-    //}
     return;
 }
 
