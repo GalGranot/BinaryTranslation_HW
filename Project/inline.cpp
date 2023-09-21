@@ -976,10 +976,6 @@ int find_candidate_rtns_for_translation(IMG img)
                 pair<ADDRINT, xed_decoded_inst_t> p(addr, xedd);
                 localInsVector.push_back(p);
                 //local_instrs_map[addr] = xedd;
-                if (addr == 0x40843c)
-                {
-                    cout << "in problematic ins" << endl;
-                }
             }
             RTN_Close(calleeRtn);
             RTN_Open(callerRtn);
@@ -1259,13 +1255,11 @@ VOID ImageLoad(IMG img, VOID *v)
     // debug print of all images' instructions
     //dump_all_image_instrs(img);
 
-
     // Step 0: Check the image and the CPU:
     if (!IMG_IsMainExecutable(img))
         return;
 
     int rc = 0;
-
     // step 1: Check size of executable sections and allocate required memory:    
     rc = allocate_and_init_memory(img);
     if (rc < 0)
@@ -1323,38 +1317,73 @@ VOID ImageLoad(IMG img, VOID *v)
 
 VOID printTargetCallees(UINT32 threshold, unordered_map<ADDRINT, rtnData>& Map)
 {
+    //for (const auto& pair : Map)
+    //{
+    //    const rtnData& callee = pair.second;
+    //    if (callee.callNum < threshold)
+    //        continue;
+    //    //outFile << hex 
+    //    //        /*<< "0x" */<< callee.rtnAddr << "," 
+    //    //        << dec << callee.rtnInsNum << "," << callee.callNum << ",";
+    //   
+    //    //for (const auto& caller2Num: callee.callers2callNumMap)
+    //    //{
+    //    //    if (caller2Num.second >= threshold && (callee.callers2callNumMap.size() == 1))
+    //    //    {
+    //    //        // print it
+    //    //        outFile << hex
+    //    //                /*<< "0x" */<< caller2Num.first << dec << "," << caller2Num.second << ",";
+    //    //    }
+    //    //}
+    //    outFile << hex
+    //        /*<< "0x" */ << callee.rtnAddr << ","
+    //        << dec << callee.rtnInsNum << "," << callee.callNum << ",";
+
+    //    for (const auto& caller2Num : callee.callers2callNumMap)
+    //    {
+    //        if (caller2Num.second >= threshold/* && (callee.callers2callNumMap.size() == 1)*/)
+    //        {
+    //            // print it
+    //            outFile << hex
+    //                /*<< "0x" */ << caller2Num.first  << dec << "," << caller2Num.second  << ",";
+    //        }
+    //    }
+    //    outFile << endl;
+    //}
+
     for (const auto& pair : Map)
     {
         const rtnData& callee = pair.second;
         if (callee.callNum < threshold)
             continue;
-        //outFile << hex 
-        //        /*<< "0x" */<< callee.rtnAddr << "," 
-        //        << dec << callee.rtnInsNum << "," << callee.callNum << ",";
-       
-        //for (const auto& caller2Num: callee.callers2callNumMap)
-        //{
-        //    if (caller2Num.second >= threshold && (callee.callers2callNumMap.size() == 1))
-        //    {
-        //        // print it
-        //        outFile << hex
-        //                /*<< "0x" */<< caller2Num.first << dec << "," << caller2Num.second << ",";
-        //    }
-        //}
-        outFile << hex
-            /*<< "0x" */ << callee.rtnAddr << ","
-            /*<< dec << callee.rtnInsNum << "," << callee.callNum << ","*/;
+        outFile << hex << callee.rtnAddr << ",";
 
+        //get hottest caller from list of callers
+        UINT32 max = callee.callers2callNumMap.begin()->second;
+        ADDRINT hottestCaller = callee.callers2callNumMap.begin()->first;
         for (const auto& caller2Num : callee.callers2callNumMap)
         {
-            if (caller2Num.second >= threshold && (callee.callers2callNumMap.size() == 1))
+            if (max < caller2Num.second)
             {
-                // print it
-                outFile << hex
-                    /*<< "0x" */ << caller2Num.first /* << dec << "," << caller2Num.second */ << ",";
+                hottestCaller = caller2Num.first;
+                max = caller2Num.second;
             }
         }
-        outFile << endl;
+        //RTN calleeRtn = RTN_FindByAddress(callee.rtnAddr);
+        //RTN callerRtn = RTN_FindByAddress(hottestCaller);
+        ////if (!RTN_Valid(calleeRtn) || !RTN_Valid(callerRtn))
+        ////{
+        ////    outFile << endl;
+        ////    continue;
+        ////}
+        //RTN_Open(calleeRtn);
+        //string calleeName = RTN_Name(RTN_FindByAddress(callee.rtnAddr));
+        //RTN_Close(calleeRtn);
+        //RTN_Open(callerRtn);
+        //string callerName = RTN_Name(RTN_FindByAddress(hottestCaller));
+        //RTN_Close(callerRtn);
+
+        outFile << hex << hottestCaller << "," << endl;
     }
 }
 
@@ -1425,7 +1454,7 @@ VOID FiniProf(INT32 code, VOID* v)
 {
     outFile.open("inline-count.csv");
     //outFile << "rtn address,rtn size,total num of calls,num of calls for each caller" << endl;
-    outFile << "callee address,caller address," << endl;
+    outFile << "callee address,caller address" << endl;
     printTargetCallees(THRESHOLD, allRtnMap);
     
     outFile.close();
@@ -1493,11 +1522,11 @@ int initInlineData()
             parses.clear();
             continue;
         }
-        //cout << "parses[0]: " << parses[0] << endl;
-        //cout << "parses[1]: " << parses[1] << endl;
+        cout << "parses[0]: " << parses[0] << endl;
+        cout << "parses[1]: " << parses[1] << endl;
         ADDRINT calleeAddress = stoull(parses[0], nullptr, 16);
         ADDRINT callerAddress = stoull(parses[1], nullptr, 16);
-        //cout << "callee address: 0x" << calleeAddress << ", caller address: 0x" << callerAddress << endl;
+        //cout << "callee address: 0x" << calleeAddress << " " << RTN_Name(RTN_FindByAddress(calleeAddress)) << ", caller address: 0x" << callerAddress << " " << RTN_Name(RTN_FindByAddress(callerAddress)) << endl;
         pair<ADDRINT, ADDRINT> p(calleeAddress, callerAddress);
         calleeCallers.push_back(p);
         parses.clear();
@@ -1582,12 +1611,11 @@ int main(int argc, char * argv[])
         // outFile.close();
         */ //FIXME code we probably don't need
 
-        IMG_AddInstrumentFunction(ImageLoad, 0);
         int initResult = initInlineData();
         if (initResult == ERROR)
             return Usage();
-        else if (initResult == SUCCESS)
-            PIN_StartProgramProbed();
+        IMG_AddInstrumentFunction(ImageLoad, 0);
+        PIN_StartProgramProbed();
     }
 
     return 0;
